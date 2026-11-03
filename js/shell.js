@@ -272,7 +272,7 @@
     mkdir: 'make a directory',
     touch: 'create an empty file',
     rm: 'remove a file',
-    grep: 'search text (-i ignore case, -v invert, -c count, -n line numbers)',
+    grep: 'search text (-i ignore case, -v invert, -c count, -n line numbers, -o only the match; patterns are regular expressions)',
     wc: 'count lines/words/chars (-l, -w, -c)',
     head: 'first lines (-n N)',
     tail: 'last lines (-n N)',
@@ -379,9 +379,17 @@
       try { re = new RegExp(pattern, flags.includes('i') ? 'i' : ''); }
       catch (e) { return { out: 'grep: invalid pattern\n', code: 2 }; }
       const inv = flags.includes('v');
+      const only = flags.includes('o') && !inv;
       const matched = [];
       lines(r.text).forEach((l, i) => {
-        if (re.test(l) !== inv) matched.push(flags.includes('n') ? (i + 1) + ':' + l : l);
+        if (re.test(l) === inv) return;
+        if (only) {
+          // -o: print each matching part on its own line
+          const g = new RegExp(re.source, re.flags + 'g');
+          (l.match(g) || []).forEach((m) => matched.push(m));
+        } else {
+          matched.push(flags.includes('n') ? (i + 1) + ':' + l : l);
+        }
       });
       const out = flags.includes('c') ? matched.length + '\n' : join(matched);
       return { out: out + r.err, code: matched.length ? 0 : 1 };

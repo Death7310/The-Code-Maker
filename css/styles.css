@@ -163,3 +163,16 @@ details { margin-top: 10px; color: var(--muted); }
 .reviewcard { max-width: 640px; position: static; }
 .from { color: var(--muted); display: block; margin-bottom: 8px; }
 .domains { font-size: .88em; color: var(--muted); }
+
+/* ---- missions ---- */
+.mission.locked { opacity: .6; }
+.adv { color: var(--muted); font-size: .92em; }
+.mstatus { font-size: .85em; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
+.brief p { margin-top: 0; }
+.event { border-left: 4px solid var(--bad); background: var(--bad-soft); padding: 12px 14px; border-radius: 6px; }
+.event p { margin: 6px 0 0; }
+.hintline { color: var(--muted); font-size: .92em; margin: 0 0 8px; }
+.opt:disabled { cursor: default; }
+.debrief h2 { margin-top: 0; }
+.terminal.big-ish { height: 420px; }
+.row { flex-wrap: wrap; }

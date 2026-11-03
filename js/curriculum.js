@@ -18,7 +18,9 @@
   const registry = CM.tracks || {};
 
   // The certification path, in order. Each stage points at one track.
-  const path = ['zero', 'aplus1', 'aplus2', 'network', 'secplus', 'practice'];
+  // Ordered by leverage: each stage reuses what the earlier ones taught
+  // (prerequisite ordering, after Gagne's learning hierarchies).
+  const path = ['zero', 'aplus1', 'aplus2', 'network', 'secplus', 'cloud', 'aws', 'azure', 'practice'];
 
   // Coding tracks run alongside the path; `start` says when to begin each one.
   const coding = [
@@ -69,6 +71,18 @@
     },
     {
       stage: 4,
+      name: 'Cloud: vendor-neutral foundations, then AWS and Azure',
+      exam: 'AWS Cloud Practitioner CLF-C02 · Microsoft Azure Fundamentals AZ-900',
+      track: 'cloud',
+      weeks: '1–2 months each',
+      domains: [
+        'CLF-C02: Cloud Concepts 24% · Security & Compliance 30% · Cloud Technology & Services 34% · Billing, Pricing & Support 12%',
+        'AZ-900: Cloud Concepts 25–30% · Azure Architecture & Services 35–40% · Management & Governance 30–35% (check the current Microsoft Learn study guide)',
+      ],
+      handsOn: 'Open free-tier accounts and set a budget alert BEFORE building anything. Create users with MFA, a private storage bucket and a small virtual network. Read your own audit logs (CloudTrail / Activity Log). Delete everything when you finish each session.',
+    },
+    {
+      stage: 5,
       name: 'Specialize: CompTIA PenTest+ (offensive) or CySA+ (defensive)',
       exam: 'PenTest+ PT0-003 · CySA+',
       track: 'practice',
@@ -82,11 +96,21 @@
     { name: 'Linux (CompTIA Linux+ or Red Hat RHCSA)', when: 'Any time after A+', why: 'Most servers and security tools run on Linux. RHCSA is entirely hands-on and highly regarded.' },
     { name: 'Cisco CCNA', when: 'Instead of, or after, Network+', why: 'Deeper and more hands-on networking. Harder than Network+, but carries more weight for network roles.' },
     { name: 'Cisco CCNA Automation (formerly DevNet)', when: 'After Network+ and some Python', why: 'Networking plus code and APIs. A strong combination for both versatility and AI resilience.' },
+    { name: 'Cloud security next steps (AWS Security Specialty, Microsoft AZ-500 / SC-200)', when: 'After the cloud fundamentals and Security+', why: 'Cloud security engineering and cloud SOC roles. Highly versatile, because nearly every organization now runs in the cloud.' },
     { name: 'EC-Council CEH', when: 'Only if job postings ask for it', why: 'Wide catalog of attack techniques and recognized by HR filters. Many practitioners see it as wide but shallow.' },
   ];
 
   const tracks = path.concat(coding.map((c) => c.id)).map((id) => registry[id]).filter(Boolean);
-  const api = { tracks, path, coding, roadmap, optional };
+  // Why the path is in this order, shown on the Roadmap page.
+  const rationale = [
+    'Each stage is a prerequisite for the next. Skills are learned in dependency order, so nothing new arrives without the foundation it rests on (Gagne, 1968, learning hierarchies).',
+    'A+ gives you hardware and operating systems, which every later stage assumes. Network+ gives you networking, which cloud and security both depend on. Security+ gives you identity, risk and incident response, which cloud security and testing apply.',
+    'Cloud comes after Security+ because it is mostly reuse: CIDR subnets, Linux and Windows servers, least privilege and logging, in a new environment. That makes it high leverage for little new material.',
+    'Coding runs alongside instead of in a block, because each language becomes useful at a specific stage: Bash for Linux, PowerShell for Windows and Azure, Python for automation across everything.',
+    'Missions fade support as you advance: Guided, then Supported, then Independent. Novices learn best from worked guidance, but the same guidance gets in the way once you know more (Kalyuga, 2007, expertise reversal effect).',
+  ];
+
+  const api = { tracks, path, coding, roadmap, optional, rationale };
   CM.curriculum = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

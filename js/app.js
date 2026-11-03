@@ -5,7 +5,8 @@
  */
 (function () {
   'use strict';
-  const { tracks, path, coding, roadmap, optional } = CM.curriculum;
+  const { tracks, path, coding, roadmap, optional, rationale } = CM.curriculum;
+  const MS = CM.missions;
   const R = CM.review;
   const app = document.getElementById('app');
 
@@ -18,6 +19,8 @@
   }
   const done = load('codemaker.progress.v1');
   const rstate = load('codemaker.review.v1');
+  const mresults = load('codemaker.missions.v1');
+  const unlocks = load('codemaker.unlock.v1');
   function markDone(id) { done[id] = true; save('codemaker.progress.v1', done); updateBadge(); }
 
   // ---------- helpers ----------
@@ -150,6 +153,8 @@
       </section>
       <h2 class="sect">Your certification path</h2>
       <ol class="pathlist">${steps}</ol>
+      <h2 class="sect">Missions: scenarios that unlock as you progress</h2>
+      <section class="grid">${missionCards()}</section>
       <h2 class="sect">Coding skills, learned alongside the path</h2>
       <section class="grid">${codeCards}
         <a class="card" href="#/sandbox"><span class="tag">Free play</span><h3>Sandbox terminal</h3><p>An open simulated Linux shell with sample logs and files to explore.</p></a>
@@ -317,6 +322,7 @@
         <h1>Roadmap: zero to specialist</h1>
         <p>Each stage builds on the one before. The time estimates are rough planning figures for a complete beginner, not guarantees. Expect to adjust them as you go.</p>
       </section>
+      <section class="callout"><h3>Why this order</h3><ul>${rationale.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></section>
       <ol class="career">${stages}</ol>
       <section class="callout">
         <h3>Optional additions</h3>
@@ -331,6 +337,150 @@
           <li>Only test systems you own or have written permission to test.</li>
         </ul>
       </section>`;
+  }
+
+
+  // ---------- missions ----------
+  const trackDone = (id) => { const t = findTrack(id); return !!t && trackProgress(t) === t.lessons.length; };
+  const missionOpen = (m) => trackDone(m.requires) || !!unlocks[m.id];
+
+  function missionCards() {
+    return MS.missions.map((m) => {
+      const open = missionOpen(m);
+      const r = mresults[m.id];
+      const req = findTrack(m.requires);
+      return `<a class="card mission ${open ? '' : 'locked'}" href="#/mission/${m.id}">
+        <span class="tag">${esc(m.level)}${r ? ' · best ' + r.best + '/' + r.max : ''}</span>
+        <h3>${open ? '' : '🔒 '}${esc(m.title)}</h3>
+        <p>${esc(m.adversary)}</p>
+        <small>${open ? (r ? 'Completed: ' + esc(MS.rating(r.best, r.max)) : 'Ready to start') : 'Unlocks after: ' + esc(req ? req.title : m.requires)}</small>
+      </a>`;
+    }).join('');
+  }
+
+  function viewMissions() {
+    app.innerHTML = `
+      <section class="trackhead">
+        <h1>Missions</h1>
+        <p>Realistic scenarios inside Harborview Logistics, a simulated company. Dig through the evidence in the terminal, answer questions, and make decisions. A simulated adversary reacts to what you choose. Missions unlock as you finish stages, and the support fades as you advance: <strong>Guided</strong> (hints shown) → <strong>Supported</strong> (hints on request) → <strong>Independent</strong> (no hints).</p>
+      </section>
+      <section class="grid">${missionCards()}</section>`;
+  }
+
+  function viewMission(id) {
+    const m = MS.missions.find((x) => x.id === id);
+    if (!m) return viewNotFound();
+    if (!missionOpen(m)) {
+      const req = findTrack(m.requires);
+      app.innerHTML = `
+        <section class="trackhead"><h1>🔒 ${esc(m.title)}</h1>
+        <p>This mission builds on <strong>${esc(req.title)}</strong>. Finish that stage first (${trackProgress(req)}/${req.lessons.length} lessons done) so you have the tools it expects.</p>
+        <p class="row"><a class="btn" href="#/track/${req.id}">Go to ${esc(req.title)}</a>
+        <button class="btn ghost" id="unlock">I already know this, unlock it</button></p></section>`;
+      document.getElementById('unlock').onclick = () => { unlocks[m.id] = true; save('codemaker.unlock.v1', unlocks); viewMission(id); };
+      return;
+    }
+    const max = MS.maxScore(m);
+    let step = -1; // -1 = briefing
+    let score = 0;
+    app.innerHTML = `
+      <nav class="crumbs"><a href="#/missions">Missions</a> / ${esc(m.level)}</nav>
+      <div class="lesson">
+        <section class="explain">
+          <h1>${esc(m.title)}</h1>
+          <p class="adv"><strong>Adversary:</strong> ${esc(m.adversary)}</p>
+          <div class="mstatus" id="mstatus"></div>
+          <div id="mstep"></div>
+        </section>
+        <section class="practice">
+          <h2>Investigation terminal</h2>
+          <p class="note">Evidence is in your home folder. Start with <code>ls</code>, then <code>ls logs</code> or similar.</p>
+          <div class="terminal big-ish" id="term"></div>
+        </section>
+      </div>`;
+    mountTerminal(document.getElementById('term'), new CM.Shell({ files: MS.shellFiles(m) }));
+    const el = document.getElementById('mstep');
+    const status = document.getElementById('mstatus');
+    const steps = m.steps;
+    const setStatus = () => {
+      status.textContent = step < 0 ? `${steps.length} steps · max score ${max}` : `Step ${Math.min(step + 1, steps.length)} of ${steps.length} · score ${score}/${max}`;
+    };
+    const cont = (label) => `<div class="nextrow"><button class="btn" id="cont">${label || 'Continue →'}</button></div>`;
+    const bindCont = () => { document.getElementById('cont').onclick = () => { step++; render(); }; };
+
+    function render() {
+      setStatus();
+      if (step < 0) {
+        el.innerHTML = `<div class="brief">${m.briefing}</div>${cont('Start mission →')}`;
+        return bindCont();
+      }
+      if (step >= steps.length) return finish();
+      const s = steps[step];
+      if (s.type === 'event') {
+        el.innerHTML = `<div class="event"><strong>⚠ Situation update</strong><p>${esc(s.text)}</p></div>${cont()}`;
+        return bindCont();
+      }
+      if (s.type === 'decision') {
+        const opts = s.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o.text)}</button>`).join('');
+        el.innerHTML = `<p class="task">Decision: ${esc(s.prompt)}</p><p class="note">Choose carefully. Decisions can't be undone.</p><div class="opts">${opts}</div><div id="outcome"></div>`;
+        el.querySelectorAll('.opt').forEach((b) => {
+          b.onclick = () => {
+            const o = s.options[Number(b.dataset.i)];
+            score += o.score;
+            setStatus();
+            el.querySelectorAll('.opt').forEach((x) => { x.disabled = true; });
+            b.classList.add(o.score === 2 ? 'chosen-ok' : 'chosen-bad');
+            const best = s.options.find((x) => x.score === 2);
+            const label = o.score === 2 ? '✓ Best call (+2)' : o.score === 1 ? '◐ Partial (+1)' : '✗ Poor call (+0)';
+            document.getElementById('outcome').innerHTML = `<div class="result ${o.score === 2 ? 'ok' : 'bad'}"><strong>${label}</strong><br>${esc(o.outcome)}</div>
+              ${o.score < 2 ? `<p class="note">The strongest option was: ${esc(best.text)}</p>` : ''}${cont()}`;
+            bindCont();
+          };
+        });
+        return;
+      }
+      // question
+      const hint = s.hint && m.level !== 'Independent'
+        ? (m.level === 'Guided'
+          ? `<p class="hintline">Hint: <code>${esc(s.hint)}</code></p>`
+          : `<details class="hintline"><summary>Show hint</summary><code>${esc(s.hint)}</code></details>`)
+        : '';
+      el.innerHTML = `<p class="task">Question</p>${hint}<div id="q"></div><div id="qres" class="result"></div>`;
+      let wrong = 0;
+      let doneQ = false;
+      renderQuestion(document.getElementById('q'), s.q, (ok) => {
+        if (doneQ) return;
+        const res = document.getElementById('qres');
+        if (!ok) { wrong++; res.className = 'result bad'; res.textContent = 'Not quite. Check the evidence again.'; return; }
+        doneQ = true;
+        const pts = wrong ? 1 : 2;
+        score += pts;
+        setStatus();
+        res.className = 'result ok';
+        res.innerHTML = `✓ +${pts} ${esc(s.q.explain)}`;
+        res.insertAdjacentHTML('afterend', cont());
+        bindCont();
+      });
+    }
+
+    function finish() {
+      const prev = mresults[m.id];
+      if (!prev || score > prev.best) mresults[m.id] = { best: score, max };
+      save('codemaker.missions.v1', mresults);
+      const nextM = MS.missions[MS.missions.indexOf(m) + 1];
+      el.innerHTML = `
+        <div class="debrief">
+          <h2>Debrief: ${esc(MS.rating(score, max))} (${score}/${max})</h2>
+          <p>Principles you just practiced:</p>
+          <ul>${m.debrief.map((d) => `<li>${esc(d)}</li>`).join('')}</ul>
+          <p class="note">Write a 5-line incident summary of this mission in your own words (what happened, evidence, actions, root cause, prevention). That's portfolio practice, and recalling it strengthens your memory.</p>
+          <div class="row"><button class="btn ghost" id="replay">Replay</button>
+          ${nextM ? `<a class="btn" href="#/mission/${nextM.id}">Next mission: ${esc(nextM.title)} →</a>` : '<a class="btn" href="#/missions">All missions</a>'}</div>
+        </div>`;
+      document.getElementById('replay').onclick = () => viewMission(id);
+      status.textContent = `Complete · score ${score}/${max}`;
+    }
+    render();
   }
 
   function viewSandbox() {
@@ -354,13 +504,15 @@
     window.scrollTo(0, 0);
     document.querySelectorAll('#nav a').forEach((a) => {
       const h = a.getAttribute('href').replace(/^#\/?/, '');
-      a.classList.toggle('active', h ? parts[0] === h : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
+      a.classList.toggle('active', h ? parts[0] === h || (h === 'missions' && parts[0] === 'mission') : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
     });
     updateBadge();
     if (!parts.length) return viewHome();
     if (parts[0] === 'track') return viewTrack(parts[1]);
     if (parts[0] === 'lesson') return viewLesson(parts[1], parts[2]);
     if (parts[0] === 'review') return viewReview();
+    if (parts[0] === 'missions') return viewMissions();
+    if (parts[0] === 'mission') return viewMission(parts[1]);
     if (parts[0] === 'roadmap' || parts[0] === 'career') return viewRoadmap();
     if (parts[0] === 'sandbox') return viewSandbox();
     viewNotFound();

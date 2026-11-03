@@ -2,9 +2,13 @@
 
 A browser-based, zero-to-specialist path for a security career. It assumes no prior knowledge and climbs through:
 
-**Ground Zero → A+ Core 1 (220-1201) → A+ Core 2 (220-1202) → Network+ (N10-009) → Security+ (SY0-701) → PenTest+ professional practice**
+**Ground Zero → A+ Core 1 (220-1201) → A+ Core 2 (220-1202) → Network+ (N10-009) → Security+ (SY0-701) → Cloud foundations → AWS (CLF-C02) → Azure (AZ-900) → PenTest+ professional practice**
+
+The order follows leverage: each stage reuses what the previous ones taught.
 
 Coding tracks in **Bash, PowerShell and Python** (the three languages named in the PenTest+ objectives) run alongside the path. A **Review** queue uses spaced retrieval practice, bringing questions back at 1, 3, 7, 14 and 30 days.
+
+**Missions** are investigation scenarios inside a fictional company. You work through evidence files in the terminal, answer questions, and make decisions that a simulated adversary reacts to. They unlock as you finish stages, and the support fades as you advance (Guided → Supported → Independent): phishing, SSH brute force, ransomware, a public S3 bucket, a leaked Azure secret, and a penetration-test engagement with scope and ethics pressure. All names, domains (`.example`) and IPs (RFC 5737 documentation ranges) are fictional.
 
 These lessons cover the skeleton of each exam, not all of it. Pair each stage with a complete study source and CompTIA's official objectives.
 
@@ -29,6 +33,7 @@ js/shell.js           sandboxed Bash-like interpreter (browser + Node)
 js/content/*.js       one file per track (lessons + exercises as data)
 js/curriculum.js      path order, coding tracks, certification roadmap
 js/review.js          spaced-review (Leitner) scheduling
+js/missions.js        scenario missions: evidence files, steps, scoring
 js/python-runner.js   lazy Pyodide loader
 js/app.js             router, views, progress
 tests/                node:test suites
@@ -40,7 +45,7 @@ tests/                node:test suites
 npm test
 ```
 
-They check the shell interpreter and the review scheduler, confirm every shell exercise can be solved, and validate all question data.
+They check the shell interpreter and the review scheduler, confirm every shell exercise and every mission question can be solved from its evidence files, and validate all question data.
 
 ## Adding a lesson
 
