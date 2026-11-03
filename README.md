@@ -20,7 +20,7 @@ Everything runs in a simulated environment. Nothing touches real systems.
 
 **Website.** Once GitHub Pages is enabled (Settings → Pages → Source: *GitHub Actions*), every push to `main` publishes the site at `https://<owner>.github.io/<repo>/`. It's a Progressive Web App: on Android choose **Install app** in the browser menu, on iPhone **Share → Add to Home Screen**. It works offline after the first visit.
 
-**Android APK.** Every push runs the *Android APK* workflow. Open the run in the **Actions** tab and download `TheCodeMaker-apk` under **Artifacts**. On the phone, allow installs from that source and open the APK. Pushing a tag such as `v1.0.0` also attaches the APK to a GitHub Release. These are debug builds for sideloading; publishing to Google Play needs a release signing key.
+**Android APK.** The easiest way: the repository's **Releases** page. Every push to `main` publishes a release with `TheCodeMaker-debug.apk` attached. Every other push still builds one: open the run in the **Actions** tab and download `TheCodeMaker-apk` under **Artifacts**. On the phone, allow installs from that source and open the APK. Pushing a tag such as `v1.0.0` also attaches the APK to a GitHub Release. These are debug builds for sideloading; publishing to Google Play needs a release signing key.
 
 **Locally.** Open `index.html` in a browser; no build step is needed. Or run `npm run build` and serve `www/`.
 

@@ -1,5 +1,6 @@
 # Builds the Android APK on every push. Download it from the run's "Artifacts"
-# section. Pushing a tag like v1.0.0 also attaches the APK to a GitHub Release.
+# section. Every push to main also publishes a GitHub Release with the APK
+# attached (Releases page → newest "build-N"), as does pushing a tag like v1.0.0.
 name: Android APK
 
 on:
@@ -54,8 +55,22 @@ jobs:
           path: TheCodeMaker-debug.apk
           if-no-files-found: error
 
-      - name: Attach APK to release (tags only)
+      - name: Attach APK to release (version tags)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          files: TheCodeMaker-debug.apk
+
+      - name: Publish release with APK (pushes to main)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: The Code Maker (build ${{ github.run_number }})
+          body: |
+            Android APK for sideloading (debug-signed). On your phone: download
+            TheCodeMaker-debug.apk, open it, and allow installs from this source when asked.
+            Built from ${{ github.sha }}.
+          make_latest: true
           files: TheCodeMaker-debug.apk
