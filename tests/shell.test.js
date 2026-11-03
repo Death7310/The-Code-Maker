@@ -16,7 +16,7 @@ test('pwd and cd', () => {
 });
 
 test('ls lists files and dirs', () => {
-  assert.strictEqual(sh().run('ls').out, 'inventory.csv  logs/  notes.txt  scope.txt\n');
+  assert.strictEqual(sh().run('ls').out, 'inventory.csv  logs/  notes.txt  scope.txt  scripts/\n');
 });
 
 test('grep with pipe and wc', () => {
@@ -63,4 +63,9 @@ test('head, tail, tr', () => {
 
 test('unknown command', () => {
   assert.strictEqual(sh().run('frobnicate').code, 127);
+});
+
+test('grep -o prints only matching parts', () => {
+  assert.strictEqual(sh().run('grep -o "10\\.0\\.5\\.3[0-9]" logs/auth.log | sort | uniq -c').out, '      4 10.0.5.31\n');
+  assert.strictEqual(sh().run('grep -oE "for [a-z]+" logs/auth.log | head -n 1').out, 'for alice\n');
 });

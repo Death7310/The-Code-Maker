@@ -1,0 +1,333 @@
+/* Track content: CompTIA A+ Core 1 (220-1201) foundations. */
+(function (root) {
+  'use strict';
+  const CM = (root.CM = root.CM || {});
+  CM.tracks = CM.tracks || {};
+  CM.tracks.aplus1 = {
+    id: 'aplus1',
+    title: 'A+ Core 1: Hardware & Networking',
+    lang: 'A+ 220-1201',
+    blurb: 'Hardware, networking, mobile, virtualization and cloud, plus the troubleshooting method used throughout the exam.',
+    lessons: [
+      {
+        id: 'a1',
+        title: 'Memory and storage types',
+        body: `
+<p><strong>RAM</strong> comes in generations: DDR4 and the newer DDR5. They aren't interchangeable, because the slots are keyed differently.</p>
+<p><strong>Storage</strong>, roughly from slowest to fastest:</p>
+<ul>
+  <li><strong>HDD</strong>: spinning platters. Cheap and large, but slow. Speed is measured in RPM (5,400 or 7,200).</li>
+  <li><strong>SATA SSD</strong>: flash memory with no moving parts, but limited by the older SATA connection.</li>
+  <li><strong>NVMe SSD</strong>: flash connected over PCIe, usually in the small <strong>M.2</strong> form factor. The fastest of the three.</li>
+</ul>
+<p><strong>Note:</strong> M.2 is a <em>shape/slot</em>, not a speed. An M.2 drive can be SATA <em>or</em> NVMe. The exam likes to test this.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Which storage option is typically the fastest?',
+          options: ['7,200 RPM HDD', 'SATA SSD', 'NVMe SSD', 'USB 2.0 flash drive'],
+          answer: 2,
+          explain: 'NVMe runs over PCIe lanes, giving it far more bandwidth than SATA.',
+        },
+        review: [
+          { question: 'An M.2 drive is always NVMe. True or false?', options: ['True', 'False'], answer: 1, explain: 'False. M.2 is a form factor and can carry either SATA or NVMe.' },
+        ],
+      },
+      {
+        id: 'a2',
+        title: 'Ports and cables',
+        body: `
+<ul>
+  <li><strong>USB-C</strong>: reversible connector used for data, charging and video.</li>
+  <li><strong>HDMI / DisplayPort</strong>: video (and audio) to monitors and TVs.</li>
+  <li><strong>RJ45</strong>: the Ethernet network connector, used with Cat5e/Cat6 twisted-pair cable.</li>
+  <li><strong>RJ11</strong>: the smaller telephone/DSL connector.</li>
+  <li><strong>Fiber optic</strong>: light instead of electricity. Long distances and immune to electrical interference.</li>
+</ul>
+<p>Copper Ethernet (Cat5e/Cat6) is generally limited to about <strong>100 meters</strong> per run.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Which connector is used for a standard wired Ethernet connection?',
+          options: ['RJ11', 'RJ45', 'HDMI', 'DisplayPort'],
+          answer: 1,
+          explain: 'RJ45 is the Ethernet connector. RJ11 is the smaller telephone connector.',
+        },
+        review: [
+          { question: 'You need to run network cable 2 km between buildings. Best choice?', options: ['Cat5e', 'Cat6', 'Fiber optic', 'USB-C'], answer: 2, explain: 'Copper Ethernet tops out around 100 m. Fiber covers long distances.' },
+        ],
+      },
+      {
+        id: 'a3',
+        title: 'IP addresses and DHCP',
+        body: `
+<p>An IPv4 address is four numbers from 0 to 255 separated by dots, like <code>192.168.1.20</code>. Each number is one byte (8 bits), which makes 32 bits in total.</p>
+<p><strong>Private ranges</strong> are used inside home and office networks and aren't routed on the internet:</p>
+<pre>10.0.0.0    – 10.255.255.255
+172.16.0.0  – 172.31.255.255
+192.168.0.0 – 192.168.255.255</pre>
+<p><strong>DHCP</strong> automatically hands out IP addresses to devices. If a Windows PC can't reach a DHCP server, it gives itself an <strong>APIPA</strong> address in <code>169.254.x.x</code>. Seeing one is a classic clue on the exam.</p>
+<p><code>127.0.0.1</code> is <strong>loopback</strong>: the device talking to itself.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A user can’t reach anything. Their IP is 169.254.10.7. What’s the most likely cause?',
+          options: ['DNS is down', 'The PC could not get an address from DHCP', 'The monitor is unplugged', 'The browser needs updating'],
+          answer: 1,
+          explain: '169.254.x.x is APIPA, a self-assigned address used when DHCP fails. Check the cable or Wi-Fi first, then the DHCP server.',
+        },
+        review: [
+          { question: 'Which of these is a PRIVATE IP address?', options: ['8.8.8.8', '172.20.4.1', '1.1.1.1', '203.0.113.9'], answer: 1, explain: '172.16.0.0–172.31.255.255 is a private range.' },
+          { type: 'input', question: 'What is the IPv4 loopback address?', accept: ['127.0.0.1'], explain: '127.0.0.1 always means "this device".' },
+        ],
+      },
+      {
+        id: 'a4',
+        title: 'Common ports and protocols',
+        body: `
+<p>Services listen on numbered ports. You need to memorize these for A+, Network+, Security+ and PenTest+. Use the Review page to drill them.</p>
+<pre>20/21  FTP      file transfer (unencrypted)
+22     SSH      secure remote shell (also SFTP)
+23     Telnet   remote shell (unencrypted, avoid)
+25     SMTP     sending email
+53     DNS      name lookups
+67/68  DHCP     automatic addressing
+80     HTTP     web (unencrypted)
+110    POP3     receiving email
+143    IMAP     receiving email
+443    HTTPS    web (encrypted)
+445    SMB      Windows file sharing
+3389   RDP      Windows Remote Desktop</pre>
+<p>Notice the pattern: older protocols (FTP, Telnet, HTTP) send data in plain text, and secure replacements (SFTP/SSH, HTTPS) encrypt it.</p>`,
+        exercise: {
+          type: 'input',
+          question: 'Which port number does HTTPS use?',
+          accept: ['443'],
+          explain: 'HTTPS = 443. Plain HTTP = 80.',
+        },
+        review: [
+          { type: 'input', question: 'Which port does SSH use?', accept: ['22'], explain: 'SSH = 22.' },
+          { type: 'input', question: 'Which port does DNS use?', accept: ['53'], explain: 'DNS = 53.' },
+          { type: 'input', question: 'Which port does Windows Remote Desktop (RDP) use?', accept: ['3389'], explain: 'RDP = 3389.' },
+          { type: 'input', question: 'Which port does SMB (Windows file sharing) use?', accept: ['445'], explain: 'SMB = 445.' },
+          { type: 'input', question: 'Which port does SMTP (sending email) use?', accept: ['25'], explain: 'SMTP = 25.' },
+          { question: 'Which protocol should replace Telnet?', options: ['FTP', 'SSH', 'HTTP', 'SMTP'], answer: 1, explain: 'SSH provides an encrypted remote shell. Telnet is plain text.' },
+        ],
+      },
+      {
+        id: 'a5',
+        title: 'Virtualization and cloud',
+        body: `
+<p>A <strong>virtual machine (VM)</strong> is a whole computer running as software inside another computer. The software that runs VMs is a <strong>hypervisor</strong>:</p>
+<ul>
+  <li><strong>Type 1 (bare metal)</strong>: runs directly on the hardware. Used in data centers.</li>
+  <li><strong>Type 2 (hosted)</strong>: runs as an app on your normal OS, like VirtualBox. Ideal for a home lab.</li>
+</ul>
+<p><strong>Cloud service models:</strong></p>
+<ul>
+  <li><strong>IaaS</strong>: you rent virtual machines and networks.</li>
+  <li><strong>PaaS</strong>: you rent a platform to deploy your code on.</li>
+  <li><strong>SaaS</strong>: you just use the finished application (webmail, for example).</li>
+</ul>
+<p><strong>Career tip:</strong> setting up VMs is how you'll build a safe, legal lab for every later stage.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A company uses a web-based email service it doesn’t manage at all. Which model is that?',
+          options: ['IaaS', 'PaaS', 'SaaS', 'Type 1 hypervisor'],
+          answer: 2,
+          explain: 'With SaaS you just use the software. The provider manages everything underneath.',
+        },
+        review: [
+          { question: 'VirtualBox running on your Windows laptop is which hypervisor type?', options: ['Type 1', 'Type 2'], answer: 1, explain: 'It runs on top of a host OS, so it’s Type 2 (hosted).' },
+        ],
+      },
+      {
+        id: 'a6',
+        title: 'Mobile devices',
+        body: `
+<ul>
+  <li><strong>MDM (mobile device management)</strong>: lets an organization enforce policies, push apps and remotely wipe lost devices.</li>
+  <li><strong>Bluetooth</strong>: short-range wireless. Devices must be <em>paired</em> first.</li>
+  <li><strong>NFC</strong>: very short range (a few cm). Used for tap-to-pay.</li>
+  <li>Laptop parts that get replaced most often: battery, keyboard, storage, RAM (on models where it isn't soldered).</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'An employee loses a company phone. What lets IT erase it remotely?',
+          options: ['NFC', 'Bluetooth pairing', 'MDM', 'APIPA'],
+          answer: 2,
+          explain: 'Mobile device management can enforce policy, lock or wipe managed devices.',
+        },
+      },
+      {
+        id: 'a7',
+        title: 'The troubleshooting method',
+        body: `
+<p>CompTIA tests a specific, ordered method. Learn it word for word. It also appears in the hands-on, scenario-based questions.</p>
+<ol>
+  <li><strong>Identify the problem</strong>: question the user, check for recent changes, back up data first.</li>
+  <li><strong>Establish a theory of probable cause</strong>: question the obvious. Is it plugged in?</li>
+  <li><strong>Test the theory</strong> to find the cause. If it's wrong, form a new theory or escalate.</li>
+  <li><strong>Establish a plan of action</strong> and implement the solution.</li>
+  <li><strong>Verify full system functionality</strong> and, if needed, put preventive measures in place.</li>
+  <li><strong>Document</strong> your findings, actions and outcomes.</li>
+</ol>
+<p>Security investigations follow the same pattern: observe, form a hypothesis, test it, act, verify, document.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'You’ve fixed the problem and confirmed everything works. What’s the final step?',
+          options: ['Close the ticket immediately', 'Document findings, actions and outcomes', 'Reboot the computer', 'Escalate to a manager'],
+          answer: 1,
+          explain: 'Documentation is always last. It helps the next technician and builds a knowledge base.',
+        },
+        review: [
+          { question: 'What comes right after "Identify the problem"?', options: ['Test the theory', 'Establish a theory of probable cause', 'Document findings', 'Implement the solution'], answer: 1, explain: 'Identify → theory → test → plan/implement → verify → document.' },
+        ],
+      },
+      {
+        id: 'a8',
+        title: 'Motherboards, CPUs and firmware',
+        body: `
+<ul>
+  <li><strong>Form factors</strong>: ATX (full size), microATX (smaller), mini-ITX (very small). The case must fit the board.</li>
+  <li><strong>Expansion slots</strong>: PCIe x1/x4/x16. Graphics cards use x16.</li>
+  <li><strong>CPU sockets</strong> must match the CPU (Intel LGA vs AMD AM5, for example). Apply thermal paste between the CPU and its cooler.</li>
+  <li><strong>BIOS/UEFI</strong>: firmware that starts the hardware and boots the OS. UEFI is the modern replacement for BIOS.</li>
+  <li><strong>Secure Boot</strong> (a UEFI feature): only lets signed, trusted bootloaders run, which blocks boot-level malware.</li>
+  <li><strong>TPM</strong> (Trusted Platform Module): a chip that securely stores encryption keys. BitLocker and Windows 11 rely on it.</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Which feature helps prevent malware from loading before the operating system starts?',
+          options: ['Hyper-threading', 'Secure Boot', 'PCIe x16', 'microATX'],
+          answer: 1,
+          explain: 'Secure Boot verifies the bootloader’s signature before letting it run.',
+        },
+        review: [
+          { question: 'BitLocker drive encryption stores its keys most securely in…', options: ['RAM', 'The TPM', 'The PSU', 'A text file'], answer: 1, explain: 'The TPM is a dedicated, tamper-resistant chip for keys.' },
+          { question: 'A graphics card normally uses which slot?', options: ['PCIe x1', 'PCIe x16', 'M.2', 'SATA'], answer: 1, explain: 'PCIe x16 gives a GPU the most lanes.' },
+        ],
+      },
+      {
+        id: 'a9',
+        title: 'RAID: combining disks',
+        body: `
+<pre>RAID 0   striping           min 2 disks   fast, NO redundancy (one disk fails = all data lost)
+RAID 1   mirroring          min 2 disks   exact copy; survives 1 failure
+RAID 5   striping + parity  min 3 disks   survives 1 failure; good capacity
+RAID 10  mirror + stripe    min 4 disks   fast and redundant</pre>
+<p><strong>RAID is not a backup.</strong> It protects against a disk failing, but not against deletion, ransomware or fire. Those still need backups.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A server has 3 disks and needs to survive one disk failure while keeping as much capacity as possible. Which RAID level?',
+          options: ['RAID 0', 'RAID 1', 'RAID 5', 'RAID 10'],
+          answer: 2,
+          explain: 'RAID 5 needs at least 3 disks, tolerates one failure, and only gives up one disk’s worth of capacity to parity.',
+        },
+        review: [
+          { question: 'Which RAID level offers NO redundancy?', options: ['RAID 0', 'RAID 1', 'RAID 5', 'RAID 10'], answer: 0, explain: 'RAID 0 is striping only.' },
+          { type: 'input', question: 'What is the minimum number of disks for RAID 10?', accept: ['4', 'four'], explain: 'Two mirrored pairs, striped together.' },
+        ],
+      },
+      {
+        id: 'a10',
+        title: 'Wireless standards',
+        body: `
+<pre>802.11a        5 GHz          (old)
+802.11b        2.4 GHz        (old)
+802.11g        2.4 GHz        (old)
+802.11n   Wi-Fi 4   2.4 + 5 GHz
+802.11ac  Wi-Fi 5   5 GHz
+802.11ax  Wi-Fi 6   2.4 + 5 GHz   (Wi-Fi 6E adds 6 GHz)</pre>
+<ul>
+  <li><strong>2.4 GHz</strong>: longer range, gets through walls better, slower, more crowded. Only 3 non-overlapping channels (1, 6 and 11).</li>
+  <li><strong>5 GHz</strong>: faster with more channels, but shorter range.</li>
+</ul>
+<p>Security: use <strong>WPA3</strong> (or WPA2 with AES at minimum). Never WEP. Disable <strong>WPS</strong>, which has known weaknesses.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Users at the far end of a warehouse lose 5 GHz Wi-Fi but get a weak 2.4 GHz signal. Why?',
+          options: ['5 GHz has shorter range than 2.4 GHz', '2.4 GHz is newer', '5 GHz is blocked by DNS', 'The PSU is failing'],
+          answer: 0,
+          explain: 'Higher frequencies don’t travel as far or pass through obstacles as well.',
+        },
+        review: [
+          { question: 'Which are the non-overlapping 2.4 GHz channels?', options: ['1, 2, 3', '1, 6, 11', '36, 40, 44', '5, 10, 15'], answer: 1, explain: 'Channels 1, 6 and 11.' },
+          { question: '802.11ax is also known as…', options: ['Wi-Fi 4', 'Wi-Fi 5', 'Wi-Fi 6', 'Bluetooth 5'], answer: 2, explain: '802.11ax = Wi-Fi 6.' },
+        ],
+      },
+      {
+        id: 'a11',
+        title: 'SOHO networks',
+        body: `
+<p>Small office/home office (SOHO) routers combine a router, switch, Wi-Fi access point, firewall and DHCP server in one box. Secure setup:</p>
+<ul>
+  <li>Change the <strong>default admin password</strong> and update the <strong>firmware</strong>.</li>
+  <li>Use WPA3/WPA2-AES, disable WPS, and consider disabling <strong>UPnP</strong>, which lets devices open ports on their own.</li>
+  <li><strong>DHCP reservation</strong>: always give a device (like a printer) the same IP.</li>
+  <li><strong>Port forwarding</strong>: sends inbound traffic on a port to one internal device. It exposes that device to the internet, so use it sparingly.</li>
+  <li>Put guest Wi-Fi on a separate network.</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A small office printer keeps getting a different IP, which breaks printing. What’s the best fix on the SOHO router?',
+          options: ['Port forwarding', 'A DHCP reservation for the printer', 'Disable DHCP entirely', 'Enable UPnP'],
+          answer: 1,
+          explain: 'A reservation ties an IP to the printer’s MAC address, so DHCP always hands it the same one.',
+        },
+        review: [
+          { question: 'What is the FIRST thing to change on a new SOHO router?', options: ['The Wi-Fi channel', 'The default admin password', 'The case color', 'The DNS suffix'], answer: 1, explain: 'Default credentials are public knowledge.' },
+        ],
+      },
+      {
+        id: 'a12',
+        title: 'Printers',
+        body: `
+<p>The <strong>laser printing process</strong> is a classic exam topic. Learn the order:</p>
+<ol>
+  <li><strong>Processing</strong>: the page is turned into an image in memory.</li>
+  <li><strong>Charging</strong>: the drum gets a uniform negative charge.</li>
+  <li><strong>Exposing</strong>: a laser draws the image on the drum.</li>
+  <li><strong>Developing</strong>: toner sticks to the drawn areas.</li>
+  <li><strong>Transferring</strong>: toner moves from the drum to the paper.</li>
+  <li><strong>Fusing</strong>: heat and pressure melt the toner onto the paper.</li>
+  <li><strong>Cleaning</strong>: leftover toner and charge are removed from the drum.</li>
+</ol>
+<p>Other types: <strong>inkjet</strong> (liquid ink), <strong>thermal</strong> (heat-sensitive paper, such as receipts), <strong>impact</strong> (multipart forms). Symptom clue: toner that <em>smears off</em> the page points to the <strong>fuser</strong>.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Printed pages come out with toner that rubs off with a finger. Which part is most likely failing?',
+          options: ['The laser', 'The fuser', 'The pickup roller', 'The network card'],
+          answer: 1,
+          explain: 'The fuser melts toner onto paper. If it isn’t hot enough, the toner stays loose.',
+        },
+        review: [
+          { question: 'Which laser printing step comes right after Developing?', options: ['Charging', 'Transferring', 'Fusing', 'Cleaning'], answer: 1, explain: 'Processing → Charging → Exposing → Developing → Transferring → Fusing → Cleaning.' },
+          { question: 'Store receipt printers are usually which type?', options: ['Laser', 'Inkjet', 'Thermal', 'Impact'], answer: 2, explain: 'Thermal printers use heat-sensitive paper.' },
+        ],
+      },
+      {
+        id: 'a13',
+        title: 'Hardware troubleshooting by symptom',
+        body: `
+<pre>Symptom                                   Likely cause
+No power at all, no fans                  PSU, power cable, outlet
+Fans spin, no display, beeps              RAM or GPU seating/failure (check beep/POST codes)
+Random reboots / shutdowns under load     Overheating (dust, failed fan, old thermal paste) or PSU
+Grinding / clicking noise                 Failing HDD, so back it up NOW
+"No boot device found"                    Boot order, failed/disconnected drive
+Wrong time after every power-off          Dead CMOS battery
+Swollen laptop battery                    Stop using it and replace it safely (fire risk)</pre>
+<p>Use the troubleshooting method from lesson 7 for all of these: theory, test, then act.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A PC loses its date and time every time it’s unplugged. What do you replace?',
+          options: ['The PSU', 'The CMOS battery', 'The RAM', 'The hard drive'],
+          answer: 1,
+          explain: 'The CMOS battery keeps firmware settings and the clock running when the PC has no power.',
+        },
+        review: [
+          { question: 'A desktop shuts off only during games, and the case is full of dust. Most likely cause?', options: ['Overheating', 'DNS failure', 'Wrong time zone', 'Bad keyboard'], answer: 0, explain: 'Heavy load plus poor cooling makes the system shut down to protect itself.' },
+          { question: 'A hard drive starts clicking. What’s the FIRST priority?', options: ['Defragment it', 'Back up the data immediately', 'Ignore it', 'Update the BIOS'], answer: 1, explain: 'Mechanical noises mean the drive may fail soon. Save the data first.' },
+        ],
+      },
+    ],
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
