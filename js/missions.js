@@ -75,8 +75,233 @@
     return L.join('\n') + '\n';
   }
 
+  // ---------- additional missions (defined first, ordered below) ----------
+  const m8 = {
+    id: 'm8',
+    title: 'Where Did It Go?',
+    requires: 'zero',
+    level: 'Guided',
+    adversary: 'None. Just a panicking colleague, a messy file system, and a request you shouldn\u2019t grant.',
+    briefing: `<p>Dana from Accounting is panicking: <em>"I can't find the Q3 budget FINAL spreadsheet and the meeting is in 20 minutes!"</em> You have access to a copy of Dana's home folder.</p>
+<p>Use <code>ls</code>, <code>cd</code> and <code>find</code>. Try <code>find . -name "*budget*"</code>: the <code>*</code> means "anything here".</p>`,
+    files: {
+      'Desktop/budget-notes.txt': 'Remember: final numbers are in the FINAL file, not the draft.\n',
+      'Documents/meeting-agenda.txt': '1. Q3 budget review\n2. Vendor contracts\n',
+      'Downloads/Q3-budget-draft.xlsx': '(spreadsheet data)\n',
+      'Downloads/old/Q3-budget-FINAL.xlsx': '(spreadsheet data)\n',
+      'Downloads/holiday-photo.jpg': '(image data)\n',
+    },
+    steps: [
+      { type: 'question', hint: 'find . -name "*budget*"', solve: 'find . -name "*budget*" | wc -l', q: { type: 'input', question: 'How many files have "budget" in their name?', accept: ['3', 'three'], explain: 'budget-notes.txt, Q3-budget-draft.xlsx and Q3-budget-FINAL.xlsx.' } },
+      { type: 'question', hint: 'Look at the find output: which one says FINAL?', solve: 'find . -name "*FINAL*"', q: { type: 'input', question: 'What is the path of the FINAL spreadsheet? (relative path like ./folder/file is fine)', accept: ['./Downloads/old/Q3-budget-FINAL.xlsx', 'Downloads/old/Q3-budget-FINAL.xlsx', '/home/student/Downloads/old/Q3-budget-FINAL.xlsx', '~/Downloads/old/Q3-budget-FINAL.xlsx'], explain: 'It was buried in Downloads/old. Paths are addresses: once you can read them, nothing is ever really "lost".' } },
+      { type: 'question', hint: 'Absolute paths start with /', q: { type: 'quiz', question: 'Which is the ABSOLUTE path to that file?', options: ['Downloads/old/Q3-budget-FINAL.xlsx', '/home/student/Downloads/old/Q3-budget-FINAL.xlsx', '../old/Q3-budget-FINAL.xlsx', 'Q3-budget-FINAL.xlsx'], answer: 1, explain: 'An absolute path starts at the root (/) and works from anywhere.' } },
+      { type: 'event', text: 'Dana is relieved, then adds: "Can you just email it to my personal Gmail? I want to finish it at home tonight."' },
+      { type: 'decision', prompt: 'How do you respond?', options: [
+        { text: 'Sure, email it to their personal address. They\u2019re an employee, after all.', score: 0, outcome: 'The spreadsheet contains salary and vendor data. It now sits in a personal account the company can\u2019t protect or audit. This is how many data leaks begin: with good intentions.' },
+        { text: 'Politely decline, and point them to the approved way to work remotely (company VPN or approved cloud storage)', score: 2, outcome: 'Dana uses the company\u2019s approved remote access that evening. The data stays under company controls. Helpful and secure aren\u2019t opposites.' },
+        { text: 'Copy it to a USB stick for them', score: 0, outcome: 'Unencrypted USB sticks get lost on trains. Same problem as personal email, with extra steps.' },
+      ] },
+    ],
+    debrief: [
+      'File systems are trees; paths are addresses. find searches the tree for you.',
+      'Absolute paths start at /; relative paths start where you are.',
+      'Being helpful never means moving company data outside approved controls.',
+      'Maps to: A+ Core 2 (operating systems, data handling and professionalism).',
+    ],
+  };
+
+  const m9 = {
+    id: 'm9',
+    title: 'The Slow PC',
+    requires: 'aplus2',
+    level: 'Guided',
+    adversary: 'Crypto-mining malware disguised as a Windows system process, set to restart itself at every login.',
+    briefing: `<p>Ticket: <em>"My computer has been crazy slow for two days and the fan never stops."</em> The user's endpoint tool exported some data for you.</p>
+<p>Evidence: <code>tasklist.csv</code> (running processes: Image, PID, CPU%, Path), <code>startup.txt</code> (programs that start at login), <code>whoami-groups.txt</code>.</p>`,
+    files: {
+      'tasklist.csv': [
+        'Image,PID,CPU,Path',
+        'System,4,0,-',
+        'svchost.exe,1120,1,C:\\Windows\\System32\\svchost.exe',
+        'svchost.exe,1288,0,C:\\Windows\\System32\\svchost.exe',
+        'explorer.exe,3300,2,C:\\Windows\\explorer.exe',
+        'msedge.exe,4410,3,C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+        'svchost.exe,6604,91,C:\\Users\\dana.cho\\AppData\\Roaming\\svchost.exe',
+      ].join('\n') + '\n',
+      'startup.txt': [
+        'Location: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
+        'OneDrive          "C:\\Users\\dana.cho\\AppData\\Local\\Microsoft\\OneDrive\\OneDrive.exe" /background',
+        'WindowsUpdateHelper  "C:\\Users\\dana.cho\\AppData\\Roaming\\svchost.exe" -pool pool.example:3333',
+      ].join('\n') + '\n',
+      'whoami-groups.txt': 'GROUP INFORMATION\nBUILTIN\\Administrators   Enabled group\nBUILTIN\\Users            Enabled group\n',
+    },
+    steps: [
+      { type: 'question', hint: 'grep svchost tasklist.csv, then compare the Path column. Real svchost.exe lives in System32.', solve: 'grep -v System32 tasklist.csv | grep svchost', q: { type: 'input', question: 'Which PID is the fake svchost.exe?', accept: ['6604'], explain: 'PID 6604 runs from AppData\\Roaming and uses 91% CPU. The genuine svchost.exe only runs from C:\\Windows\\System32.' } },
+      { type: 'question', q: { type: 'quiz', question: 'Why is that process suspicious? Pick the best reason.', options: ['svchost.exe is always malware', 'A system process name running from a user\u2019s AppData folder, using 91% CPU', 'It has a low PID', 'It\u2019s listed last'], answer: 1, explain: 'Malware borrows trusted names. The location and the behavior give it away.' } },
+      { type: 'question', hint: 'grep AppData startup.txt', solve: 'grep Roaming startup.txt', q: { type: 'input', question: 'What is the NAME of the startup entry that relaunches it at every login?', accept: ['WindowsUpdateHelper'], explain: 'A reassuring name ("WindowsUpdateHelper") pointing at the fake svchost.exe. This is persistence: it runs again after every login.' } },
+      { type: 'decision', prompt: 'You\u2019ve verified the infection. What now?', options: [
+        { text: 'Quarantine: disconnect the PC from the network', score: 2, outcome: 'The miner loses contact with its pool, and nothing can spread from this PC. Step 2 of the CompTIA malware removal process.' },
+        { text: 'Delete the file right away while the PC stays online', score: 1, outcome: 'You remove the file, but at the next login the startup entry fails noisily, and you haven\u2019t checked what else it downloaded while it was online. Quarantine first.' },
+        { text: 'Reboot and see if it\u2019s still slow', score: 0, outcome: 'The startup entry relaunches the miner on login. Nothing has changed except the user\u2019s patience.' },
+      ] },
+      { type: 'question', q: { type: 'quiz', question: 'After quarantine, which step comes next in the CompTIA process?', options: ['Educate the user', 'Disable System Restore', 'Schedule scans', 'Create a restore point'], answer: 1, explain: 'Disable System Restore so infected restore points can\u2019t bring the malware back. Then remediate.' } },
+      { type: 'event', text: 'Root cause: whoami-groups.txt shows Dana\u2019s everyday account is in the local Administrators group, so the malware could install itself without being stopped.' },
+      { type: 'decision', prompt: 'What prevents a repeat?', options: [
+        { text: 'Remove everyday admin rights (least privilege), keep anti-malware updated, and teach Dana how the infection likely arrived', score: 2, outcome: 'Without admin rights, much commodity malware can\u2019t install system-wide. Education closes the loop: it\u2019s step 7 for a reason.' },
+        { text: 'Buy Dana a faster computer', score: 0, outcome: 'The new computer starts mining too.' },
+        { text: 'Tell Dana to stop downloading things', score: 1, outcome: 'Well-meant, but without technical controls it\u2019s just hope.' },
+      ] },
+    ],
+    debrief: [
+      'Malware hides behind trusted names. Check the path and the behavior, not just the name.',
+      'Persistence (startup entries, scheduled tasks, services) is how malware survives reboots.',
+      'Follow the order: verify → quarantine → disable System Restore → remediate → scan/update → re-enable restore → educate.',
+      'Least privilege stops a lot of malware before it starts.',
+      'Maps to: A+ Core 2 (malware removal, software troubleshooting, security).',
+    ],
+  };
+
+  const m10 = {
+    id: 'm10',
+    title: 'Who\u2019s Using the CPU?',
+    requires: 'linux',
+    level: 'Supported',
+    adversary: 'An attacker who abused a file-upload page to run a crypto-miner on your web server, with a cron job to restart it.',
+    briefing: `<p>Monitoring says <strong>web01</strong> has been at 100% CPU since last night. You have a shell on it. This is a live Linux system: <code>ps aux</code>, <code>top</code>, <code>pgrep</code>, <code>kill</code>, <code>sudo</code>, <code>ls -la</code>, <code>cat</code> and <code>grep</code> all work.</p>
+<p>Tip: try killing the process before you understand it, and watch what happens.</p>`,
+    files: {
+      '/tmp/.cache/kworkerd': '(binary data: miner)\n',
+      '/etc/cron.d/sysupdate': '# system update\n*/5 * * * * www-data /tmp/.cache/kworkerd -o pool.example:3333\n',
+      '/var/log/nginx/access.log': [
+        '10.20.0.31 - - [02/Nov/2026:16:40:02 +0000] "GET / HTTP/1.1" 200',
+        '198.51.100.66 - - [02/Nov/2026:23:11:40 +0000] "GET /upload.php HTTP/1.1" 200',
+        '198.51.100.66 - - [02/Nov/2026:23:11:52 +0000] "POST /upload.php HTTP/1.1" 200 file=kworkerd',
+        '198.51.100.66 - - [02/Nov/2026:23:12:05 +0000] "GET /uploads/run.php HTTP/1.1" 200',
+        '10.20.0.31 - - [03/Nov/2026:08:01:12 +0000] "GET /orders HTTP/1.1" 200',
+      ].join('\n') + '\n',
+    },
+    meta: {
+      '/tmp/.cache': { mode: '755', owner: 'www-data', group: 'www-data' },
+      '/tmp/.cache/kworkerd': { mode: '755', owner: 'www-data', group: 'www-data' },
+      '/var/log/nginx': { mode: '755', owner: 'root', group: 'adm' },
+      '/var/log/nginx/access.log': { mode: '640', owner: 'root', group: 'adm' },
+    },
+    processes: [
+      { pid: 1, user: 'root', cpu: 0.0, mem: 0.3, cmd: '/sbin/init' },
+      { pid: 412, user: 'root', cpu: 0.1, mem: 0.2, cmd: '/usr/sbin/sshd -D' },
+      { pid: 655, user: 'root', cpu: 0.0, mem: 0.1, cmd: '/usr/sbin/cron -f' },
+      { pid: 788, user: 'www-data', cpu: 0.4, mem: 0.6, cmd: 'nginx: worker process' },
+      { pid: 1022, user: 'student', cpu: 0.0, mem: 0.1, cmd: '-bash' },
+      { pid: 2718, user: 'www-data', cpu: 97.6, mem: 2.1, cmd: '/tmp/.cache/kworkerd -o pool.example:3333', respawnIf: '/etc/cron.d/sysupdate' },
+    ],
+    steps: [
+      { type: 'question', hint: 'top', solve: 'top', q: { type: 'input', question: 'What is the name of the program eating the CPU? (just the file name)', accept: ['kworkerd', '/tmp/.cache/kworkerd'], explain: 'kworkerd at 97.6%. The name imitates the real kernel threads called "kworker".' } },
+      { type: 'question', hint: 'ps aux | grep kworkerd', solve: 'ps aux | grep kworkerd', q: { type: 'input', question: 'Which user account is it running as?', accept: ['www-data'], explain: 'www-data is the web server\u2019s account, so the attacker most likely came in through the website.' } },
+      { type: 'question', q: { type: 'quiz', question: 'What makes /tmp/.cache/kworkerd especially suspicious?', options: ['It\u2019s in /tmp', 'A hidden directory (.cache) inside /tmp, run by the web server account, connecting to a "pool"', 'Its name has a k in it', 'It uses RAM'], answer: 1, explain: 'Hidden folder, world-writable location, web account, mining-pool argument: each is a red flag, and together they\u2019re conclusive.' } },
+      { type: 'decision', prompt: 'What do you do first?', options: [
+        { text: 'sudo kill the process immediately and call it fixed', score: 0, outcome: 'It\u2019s gone, then back within minutes with a new PID. Something is restarting it. (Try it in the terminal: sudo kill 2718, then pgrep kworkerd.) Find the persistence before you declare victory.' },
+        { text: 'Find out what restarts it and how it got in before removing it, and save copies of the evidence', score: 2, outcome: 'Correct order: understand, preserve, then eradicate everything at once so the attacker can\u2019t just come back.' },
+        { text: 'Reboot the server', score: 0, outcome: 'The cron job starts it again after boot, and you\u2019ve lost the process information you could have examined.' },
+      ] },
+      { type: 'question', hint: 'ls /etc/cron.d, then cat the suspicious file', solve: 'ls /etc/cron.d', q: { type: 'input', question: 'Which file in /etc/cron.d restarts the miner?', accept: ['sysupdate', '/etc/cron.d/sysupdate'], explain: 'Every 5 minutes it relaunches the miner as www-data. A harmless-sounding name, as usual.' } },
+      { type: 'question', hint: 'sudo grep kworkerd /var/log/nginx/access.log', solve: 'sudo grep kworkerd /var/log/nginx/access.log', q: { type: 'input', question: 'Which web page did the attacker abuse to upload the miner?', accept: ['/upload.php', 'upload.php'], explain: 'A POST to /upload.php carrying the file. An upload form that accepts and runs any file is the root cause.' } },
+      { type: 'event', text: 'Now remove it for real in the terminal: sudo rm /etc/cron.d/sysupdate, then sudo kill the miner\u2019s current PID, then check with pgrep kworkerd. With the cron job gone, it stays dead.' },
+      { type: 'decision', prompt: 'Eradication and recovery. What\u2019s the complete fix?', options: [
+        { text: 'Remove the cron job and binary, kill the process, fix or disable upload.php, check for other changes the attacker made, and consider rebuilding the server from a clean image', score: 2, outcome: 'Every way back in is closed. Because an attacker had code execution, rebuilding from a known-good image is the safest end state, and many teams do it by default.' },
+        { text: 'Delete /tmp/.cache and move on', score: 0, outcome: 'upload.php is still open. The same attacker, or another, uploads the miner again tonight.' },
+        { text: 'Block 198.51.100.66 at the firewall', score: 1, outcome: 'It helps a little, but the vulnerable upload page is still there for anyone else.' },
+      ] },
+    ],
+    debrief: [
+      'top / ps aux / pgrep find the problem; the user and path tell you where it came from.',
+      'Killing a process without removing its persistence is whack-a-mole.',
+      'Logs connect the symptom (a CPU spike) to the root cause (an abusable upload page).',
+      'Eradicate everything at once; when code execution was achieved, rebuilding is the safest recovery.',
+      'Maps to: Linux+ (processes, cron, permissions), Security+ (incident response), PenTest+ (why file-upload flaws are high severity).',
+    ],
+  };
+
+  const m11 = {
+    id: 'm11',
+    title: 'Wrong Turn',
+    requires: 'network',
+    level: 'Supported',
+    adversary: 'A rogue DHCP server. Today it\u2019s an employee\u2019s home router; tomorrow it could be an attacker sitting in the middle of all traffic.',
+    briefing: `<p>Several Accounting PCs suddenly can't reach internal systems, but HR is fine. You've collected ipconfig output from a few PCs, a DHCP packet capture summary, and the access switch's MAC address table.</p>
+<p>Evidence: <code>pcs/</code>, <code>capture/dhcp.txt</code>, <code>switch/mac-table.txt</code>.</p>`,
+    files: {
+      'pcs/acct-pc03.txt': 'IPv4 Address. . . . . : 192.168.0.23\nSubnet Mask . . . . . : 255.255.255.0\nDefault Gateway . . . : 192.168.0.1\nDHCP Server . . . . . : 192.168.0.1\nDNS Servers . . . . . : 192.168.0.1\n',
+      'pcs/acct-pc04.txt': 'IPv4 Address. . . . . : 192.168.0.31\nSubnet Mask . . . . . : 255.255.255.0\nDefault Gateway . . . : 192.168.0.1\nDHCP Server . . . . . : 192.168.0.1\nDNS Servers . . . . . : 192.168.0.1\n',
+      'pcs/hr-pc01.txt': 'IPv4 Address. . . . . : 10.20.0.61\nSubnet Mask . . . . . : 255.255.255.0\nDefault Gateway . . . : 10.20.0.1\nDHCP Server . . . . . : 10.20.0.2\nDNS Servers . . . . . : 10.20.0.2\n',
+      'capture/dhcp.txt': '08:01:02 DHCPOFFER from 10.20.0.2 (mac 52:54:00:aa:bb:01) offer 10.20.0.61\n08:03:10 DHCPOFFER from 192.168.0.1 (mac a4:2b:b0:11:22:33) offer 192.168.0.23\n08:03:10 DHCPOFFER from 10.20.0.2 (mac 52:54:00:aa:bb:01) offer 10.20.0.64\n08:04:55 DHCPOFFER from 192.168.0.1 (mac a4:2b:b0:11:22:33) offer 192.168.0.31\n',
+      'switch/mac-table.txt': 'VLAN  MAC Address        Type     Port\n20    52:54:00:aa:bb:01  DYNAMIC  Gi1/0/1\n20    3c:52:82:10:20:61  DYNAMIC  Gi1/0/9\n20    a4:2b:b0:11:22:33  DYNAMIC  Gi1/0/17\n20    3c:52:82:10:20:23  DYNAMIC  Gi1/0/18\n',
+    },
+    steps: [
+      { type: 'question', hint: 'grep Gateway pcs/acct-pc03.txt', solve: 'grep Gateway pcs/acct-pc03.txt', q: { type: 'input', question: 'What default gateway did the broken Accounting PCs receive?', accept: ['192.168.0.1'], explain: 'A 192.168.0.x network that doesn\u2019t exist in the company\u2019s 10.20.0.0/24 design.' } },
+      { type: 'question', hint: 'cat pcs/hr-pc01.txt (a working PC)', solve: 'grep DHCP pcs/hr-pc01.txt', q: { type: 'input', question: 'What is the IP of the LEGITIMATE DHCP server?', accept: ['10.20.0.2'], explain: 'Working PCs got their lease from 10.20.0.2.' } },
+      { type: 'question', hint: 'grep 192.168.0.1 capture/dhcp.txt', solve: 'grep 192.168.0.1 capture/dhcp.txt', q: { type: 'input', question: 'What is the MAC address of the rogue DHCP server?', accept: ['a4:2b:b0:11:22:33'], explain: 'Both offers from 192.168.0.1 came from a4:2b:b0:11:22:33. Two DHCP servers were racing, and whichever answered first won.' } },
+      { type: 'question', hint: 'grep that MAC in switch/mac-table.txt', solve: 'grep a4:2b:b0:11:22:33 switch/mac-table.txt', q: { type: 'input', question: 'Which switch port is the rogue device plugged into?', accept: ['Gi1/0/17', 'gi1/0/17'], explain: 'The MAC address table maps the address to a physical port, and from there you can follow the cable to a desk.' } },
+      { type: 'event', text: 'At port Gi1/0/17 you find a consumer Wi-Fi router an employee plugged in "to get better Wi-Fi". Not malicious this time. But an attacker using the same trick would become every victim\u2019s gateway and DNS server, and could watch or alter all of their traffic.' },
+      { type: 'decision', prompt: 'Immediate response?', options: [
+        { text: 'Shut down port Gi1/0/17, remove the device, then have affected PCs renew their leases (ipconfig /release and /renew)', score: 2, outcome: 'The rogue server is gone, PCs pick up correct leases from 10.20.0.2, and Accounting is back within minutes.' },
+        { text: 'Reboot all the Accounting PCs', score: 0, outcome: 'Half of them get the rogue lease again. The source is still on the network.' },
+        { text: 'Turn off the legitimate DHCP server to stop the conflict', score: 0, outcome: 'Now everyone gets rogue addresses. You\u2019ve made the attacker\u2019s job easier.' },
+      ] },
+      { type: 'decision', prompt: 'Prevention?', options: [
+        { text: 'Enable DHCP snooping (only trusted ports may send DHCP offers), plus port security or 802.1X to control what can connect', score: 2, outcome: 'Switches now drop DHCP offers from untrusted ports, so a rogue server can\u2019t answer anyone. This is a Network+ control used in real networks.' },
+        { text: 'Add "no personal routers" to the policy', score: 1, outcome: 'Policy matters, but technical controls enforce it, including against people who don\u2019t follow policies.' },
+        { text: 'Switch everyone to static IP addresses', score: 0, outcome: 'Unmanageable at scale, and it doesn\u2019t stop someone plugging in a device anyway.' },
+      ] },
+    ],
+    debrief: [
+      'Compare broken with working: the difference points to the cause.',
+      'DHCP gives out more than an IP address: it also sets the gateway and DNS. Whoever controls DHCP controls where traffic goes.',
+      'MAC address tables turn an address into a physical switch port.',
+      'DHCP snooping and port security are the real fixes.',
+      'Maps to: Network+ (network implementation, security, troubleshooting).',
+    ],
+  };
+
+  const m12 = {
+    id: 'm12',
+    title: 'DNS Detour',
+    requires: 'network',
+    level: 'Supported',
+    adversary: 'Malware that edits a PC\u2019s hosts file to silently send an internal portal to an attacker\u2019s server and harvest logins.',
+    briefing: `<p>A user says the staff portal "looked weird and asked me to log in twice". IT confirms the portal itself is fine. You have the user's hosts file, an nslookup from a clean machine, and the user's proxy log.</p>
+<p>Evidence: <code>hosts.txt</code> (copy of C:\\Windows\\System32\\drivers\\etc\\hosts), <code>nslookup.txt</code>, <code>proxy.log</code>.</p>`,
+    files: {
+      'hosts.txt': '# Copyright (c) Microsoft Corp.\n# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.\n#\n# localhost name resolution is handled within DNS itself.\n#\t127.0.0.1       localhost\n203.0.113.66    portal.harborview.example\n',
+      'nslookup.txt': 'Server:  dns1.harborview.example\nAddress: 10.20.0.2\n\nName:    portal.harborview.example\nAddress: 10.20.0.30\n',
+      'proxy.log': '2026-11-03T09:14:02Z user=lee.wong CONNECT 203.0.113.66:443 cert_warning=name_mismatch user_action=proceed\n2026-11-03T09:14:40Z user=lee.wong POST https://portal.harborview.example/login dest_ip=203.0.113.66\n2026-11-03T09:15:05Z user=lee.wong CONNECT 10.20.0.30:443 cert_warning=none\n',
+    },
+    steps: [
+      { type: 'question', hint: 'grep -v "#" hosts.txt shows only the active lines', solve: 'grep -v "#" hosts.txt', q: { type: 'input', question: 'Which hostname has been overridden in the hosts file?', accept: ['portal.harborview.example'], explain: 'The hosts file is checked BEFORE DNS. One line silently sends the portal somewhere else.' } },
+      { type: 'question', solve: 'grep -v "#" hosts.txt', q: { type: 'input', question: 'Which IP does the hosts file send it to?', accept: ['203.0.113.66'], explain: '203.0.113.66: an outside address, not the company\u2019s.' } },
+      { type: 'question', hint: 'cat nslookup.txt', solve: 'grep Address nslookup.txt', q: { type: 'input', question: 'What is the portal\u2019s REAL IP according to the company DNS server?', accept: ['10.20.0.30'], explain: 'DNS says 10.20.0.30. The mismatch confirms the hijack.' } },
+      { type: 'question', hint: 'grep 203.0.113.66 proxy.log', solve: 'grep cert_warning proxy.log', q: { type: 'quiz', question: 'The browser showed a certificate warning, and the user clicked through. Why was there a warning?', options: ['The portal\u2019s certificate expired', 'The fake server couldn\u2019t present a valid certificate for portal.harborview.example', 'The user\u2019s clock was wrong', 'Certificates always warn on Mondays'], answer: 1, explain: 'TLS certificates prove a server\u2019s identity. The attacker\u2019s server couldn\u2019t prove it was the portal, and the warning was the browser saying so.' } },
+      { type: 'event', text: 'The proxy log shows a POST to /login sent to 203.0.113.66. The user typed their password into the attacker\u2019s fake portal.' },
+      { type: 'decision', prompt: 'Response?', options: [
+        { text: 'Reset the user\u2019s portal password and sessions, remove the hosts entry, and investigate the malware that changed it (editing hosts needs admin rights)', score: 2, outcome: 'The stolen password is useless, the redirect is gone, and the scan finds the malware that made the change. Root cause found.' },
+        { text: 'Run ipconfig /flushdns', score: 0, outcome: 'Flushing the DNS cache doesn\u2019t touch the hosts file. The redirect keeps working.' },
+        { text: 'Delete the hosts entry and close the ticket', score: 1, outcome: 'The redirect is gone, but the attacker still has a working password, and the malware can simply add the line back.' },
+      ] },
+      { type: 'decision', prompt: 'Prevention?', options: [
+        { text: 'Remove everyday admin rights, monitor hosts-file changes with EDR/file-integrity monitoring, add MFA to the portal, and train users never to click through certificate warnings', score: 2, outcome: 'Each layer stops a different part of the attack. Defense in depth again.' },
+        { text: 'Make the hosts file read-only and do nothing else', score: 1, outcome: 'Malware running as admin can change it back. Fix the privilege problem underneath.' },
+      ] },
+    ],
+    debrief: [
+      'Name resolution order matters: the hosts file overrides DNS.',
+      'Certificate warnings are security alerts, not annoyances.',
+      'Compare against a known-good source (here, nslookup against company DNS).',
+      'Reset credentials that were exposed, and find the root cause of the change.',
+      'Maps to: Network+ (DNS, troubleshooting), A+ Core 2 (security, malware), Security+ (PKI, identity).',
+    ],
+  };
+
   // ---------- missions ----------
-  const missions = [
+  const baseMissions = [
     {
       id: 'm1',
       title: 'First Ticket',
@@ -415,6 +640,11 @@
     },
   ];
 
+  // Final order: by the stage that unlocks each mission.
+  const byId = {};
+  baseMissions.concat([m8, m9, m10, m11, m12]).forEach((m) => { byId[m.id] = m; });
+  const missions = ['m8', 'm1', 'm2', 'm9', 'm10', 'm3', 'm11', 'm12', 'm4', 'm5', 'm6', 'm7'].map((id) => byId[id]);
+
   // ---------- scoring ----------
   function maxScore(m) {
     return m.steps.filter((s) => s.type === 'question' || s.type === 'decision').length * 2;
@@ -425,14 +655,21 @@
     if (pct >= 0.6) return 'Solid';
     return 'Needs another run';
   }
-  // Full paths for the shell's virtual filesystem.
+  // Full paths for the shell's virtual filesystem (relative keys go under ~).
   function shellFiles(m) {
     const out = {};
-    Object.keys(m.files).forEach((k) => { out['/home/student/' + k] = m.files[k]; });
+    Object.keys(m.files).forEach((k) => { out[k.startsWith('/') ? k : '/home/student/' + k] = m.files[k]; });
     return out;
   }
+  // Everything needed to build a mission's sandbox: files, permissions, processes.
+  function shellOptions(m) {
+    const o = { files: shellFiles(m) };
+    if (m.meta) o.meta = m.meta;
+    if (m.processes) o.processes = m.processes;
+    return o;
+  }
 
-  const api = { missions, maxScore, rating, shellFiles };
+  const api = { missions, maxScore, rating, shellFiles, shellOptions };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.CM = root.CM || {}; root.CM.missions = api; }
 })(typeof window !== 'undefined' ? window : globalThis);

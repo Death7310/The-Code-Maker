@@ -1,0 +1,8 @@
+{
+  "appId": "io.github.death7310.codemaker",
+  "appName": "The Code Maker",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0f1419"
+  }
+}

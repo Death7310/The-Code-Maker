@@ -16,7 +16,7 @@ test('pwd and cd', () => {
 });
 
 test('ls lists files and dirs', () => {
-  assert.strictEqual(sh().run('ls').out, 'inventory.csv  logs/  notes.txt  scope.txt\n');
+  assert.strictEqual(sh().run('ls').out, 'inventory.csv  logs/  notes.txt  scope.txt  scripts/\n');
 });
 
 test('grep with pipe and wc', () => {

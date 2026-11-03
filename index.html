@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Code Maker</title>
   <meta name="description" content="A zero-to-specialist path through CompTIA A+, Network+, Security+, AWS, Azure and PenTest+, with coding in Bash, Python and PowerShell.">
+  <meta name="theme-color" content="#0f1419">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -29,6 +33,7 @@
   <script src="js/content/zero.js"></script>
   <script src="js/content/aplus1.js"></script>
   <script src="js/content/aplus2.js"></script>
+  <script src="js/content/linux.js"></script>
   <script src="js/content/network.js"></script>
   <script src="js/content/secplus.js"></script>
   <script src="js/content/cloud.js"></script>
@@ -45,5 +50,12 @@
   <script src="js/exams.js"></script>
   <script src="js/python-runner.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    // Offline support for the website. Skipped for local files and inside the Android app,
+    // which already bundles every file.
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && !window.Capacitor) {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    }
+  </script>
 </body>
 </html>

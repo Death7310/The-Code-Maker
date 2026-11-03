@@ -232,7 +232,7 @@
         ${ex.hint ? `<details><summary>Hint</summary><code>${esc(ex.hint)}</code></details>` : ''}`;
       const shell = new CM.Shell();
       mountTerminal(document.getElementById('term'), shell, (line, r) => {
-        if (r.out === ex.expect) pass('Correct, lesson complete.');
+        if ([].concat(ex.expect).includes(r.out)) pass('Correct, lesson complete.');
         else if (line.trim() && line.trim() !== 'help') fail('Not quite. The output doesn’t match yet. Keep going.');
       });
     } else if (ex.type === 'python') {
@@ -407,7 +407,7 @@
           <div class="terminal big-ish" id="term"></div>
         </section>
       </div>`;
-    mountTerminal(document.getElementById('term'), new CM.Shell({ files: MS.shellFiles(m) }));
+    mountTerminal(document.getElementById('term'), new CM.Shell(MS.shellOptions(m)));
     const el = document.getElementById('mstep');
     const status = document.getElementById('mstatus');
     const steps = m.steps;

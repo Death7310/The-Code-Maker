@@ -20,7 +20,19 @@ const SOLUTIONS = {
   b4: 'grep Failed logs/auth.log | grep -v root | wc -l',
   b5: 'HOST=db01; echo "checking $HOST"',
   b6: 'for x in alpha beta; do echo "item: $x"; done',
+  l1: 'cat /etc/hostname',
+  l2: 'find . -name "*.sh"',
+  l3: 'grep student /etc/passwd | cut -d: -f6',
+  l4: 'chmod 600 notes.txt && stat -c %a notes.txt',
+  l5: 'sudo wc -l /etc/shadow',
+  l6: 'chmod +x scripts/check.sh && ./scripts/check.sh',
+  l7: 'pgrep updaterd',
+  l8: 'systemctl status nginx',
+  l9: 'ip route | grep default | cut -d " " -f 3',
+  l10: 'sudo grep -c sudo /var/log/auth.log',
 };
+// Alternate valid solutions that must also pass.
+const ALTERNATES = { l2: 'find ~ -name "*.sh"', l6: 'chmod u+x scripts/check.sh; ./scripts/check.sh' };
 
 test('every track in the path and coding list exists', () => {
   const ids = tracks.map((t) => t.id);
@@ -53,7 +65,10 @@ for (const t of tracks) {
       assert.ok(l.title && l.body, 'title/body');
       if (ex.type === 'shell') {
         assert.ok(SOLUTIONS[l.id], 'missing reference solution');
-        assert.strictEqual(new Shell().run(SOLUTIONS[l.id]).out, ex.expect);
+        const ok = (out) => [].concat(ex.expect).includes(out);
+        const got = new Shell().run(SOLUTIONS[l.id]).out;
+        assert.ok(ok(got), `${l.id}: ${JSON.stringify(got)}`);
+        if (ALTERNATES[l.id]) assert.ok(ok(new Shell().run(ALTERNATES[l.id]).out), l.id + ' alternate');
       } else if (ex.type === 'python') {
         assert.ok(ex.starter && ex.expect);
       } else {
