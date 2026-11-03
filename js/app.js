@@ -8,6 +8,8 @@
   const { tracks, path, coding, roadmap, optional, rationale } = CM.curriculum;
   const MS = CM.missions;
   const DR = CM.drills;
+  const PR = CM.practice;
+  const PMAP = CM.practiceMap || {};
   const EX = CM.exams;
   const R = CM.review;
   const app = document.getElementById('app');
@@ -31,7 +33,7 @@
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const findTrack = (id) => tracks.find((t) => t.id === id);
   const trackProgress = (t) => t.lessons.filter((l) => done[l.id]).length;
-  const dueItems = () => R.due(R.collect(tracks, done), rstate, Date.now());
+  const dueItems = () => R.due(R.collect(tracks, done, PMAP), rstate, Date.now());
 
   function updateBadge() {
     const b = document.getElementById('due-badge');
@@ -159,6 +161,7 @@
       <ol class="pathlist">${steps}</ol>
       <h2 class="sect">Practice tools</h2>
       <section class="grid">
+        <a class="card" href="#/mixed"><span class="tag">Mixed practice</span><h3>Interleaved problems</h3><p>New problems from every lesson you've mastered, shuffled together. You have to recognize which principle applies before you can apply it.</p></a>
         <a class="card" href="#/drills/subnet"><span class="tag">Drills</span><h3>Subnetting, binary & ports</h3><p>Endless generated problems with worked solutions. Ten minutes a day makes subnetting automatic.</p></a>
         <a class="card" href="#/exams"><span class="tag">Practice exams</span><h3>A+, Network+, Security+</h3><p>Exam-style sets with shuffled options and results by official domain, so you know what to study next.</p></a>
       </section>
@@ -201,6 +204,7 @@
     const t = findTrack(tid);
     const idx = t ? t.lessons.findIndex((l) => l.id === lid) : -1;
     if (idx < 0) return viewNotFound();
+    if (PMAP[lid]) return viewMasteryLesson(t, idx);
     const l = t.lessons[idx];
     const next = t.lessons[idx + 1];
     const ex = l.exercise;
@@ -256,11 +260,15 @@
         btn.disabled = true;
         pyout.textContent = 'Running… (the first run downloads Python, which takes a few seconds)';
         try {
-          const r = await CM.runPython(code.value);
+          // Graded exercises append hidden tests with a fresh random seed each run,
+          // so passing requires a general solution, not a hard-coded answer.
+          const seed = Math.floor(Math.random() * 1e9);
+          const src = ex.tests ? code.value + '\n' + ex.tests.replace('__SEED__', String(seed)) : code.value;
+          const r = await CM.runPython(src);
           pyout.textContent = r.stdout + (r.error ? '\n' + r.error : '');
           if (r.error) fail('Your code raised an error. Read the last line of the message above.');
-          else if (r.stdout.trim() === ex.expect.trim()) pass();
-          else fail('It ran, but the output doesn’t match the expected output yet.');
+          else if (ex.tests ? r.stdout.includes('ALL TESTS PASSED') : r.stdout.trim() === ex.expect.trim()) pass(ex.tests ? 'All hidden tests passed: your function works on cases you never saw.' : undefined);
+          else fail(ex.tests ? 'Some hidden tests failed. Read the expected vs got lines above, fix the function, and run again (the tests change every run).' : 'It ran, but the output doesn’t match the expected output yet.');
         } catch (e) {
           pyout.textContent = '';
           fail(e.message);
@@ -278,7 +286,7 @@
 
   function viewReview() {
     const queue = dueItems();
-    const total = R.collect(tracks, done).length;
+    const total = R.collect(tracks, done, PMAP).length;
     if (!queue.length) {
       app.innerHTML = `
         <section class="trackhead"><h1>Review</h1>
@@ -298,6 +306,20 @@
         <div class="nextrow" id="nextrow" hidden><button class="btn" id="next">Next question →</button></div>
       </section>`;
     let answered = false;
+    if (item.type === 'gen') {
+      // Fresh generated problem for this principle.
+      const inst = PR.make(item.gen);
+      renderPracticeItem(document.getElementById('q'), inst, (ok, hinted) => {
+        const good = ok && !hinted;
+        rstate[item.id] = R.grade(rstate[item.id], good, Date.now());
+        save('codemaker.review.v1', rstate);
+        updateBadge();
+        document.getElementById('nextrow').hidden = false;
+        document.getElementById('result').outerHTML = '<div id="result">' + feedback(inst, ok, hinted) + '</div>';
+      });
+      document.getElementById('next').onclick = viewReview;
+      return;
+    }
     renderQuestion(document.getElementById('q'), item, (ok) => {
       const result = document.getElementById('result');
       if (!answered) {
@@ -674,6 +696,214 @@
     window.scrollTo(0, 0);
   }
 
+
+  // ---------- generated practice ----------
+  // Renders one generated item. cb(correct, hinted) is called once per answer.
+  function renderPracticeItem(el, item, cb) {
+    const hintBtn = item.hint ? '<button class="btn ghost small" data-act="hint">Hint (won’t count)</button>' : '';
+    const solBtn = '<button class="btn ghost small" data-act="sol">Show worked solution (won’t count)</button>';
+    let body = `<pre class="question">${esc(item.prompt)}</pre>`;
+    if (item.shell) body += '<div class="terminal" data-term></div><p class="note">This sandbox was generated just for this problem. Investigate, then type your answer below.</p>';
+    if (item.kind === 'choice') {
+      body += `<div class="opts">${item.options.map((o, k) => `<button class="opt" data-k="${k}">${esc(o)}</button>`).join('')}</div>`;
+    } else {
+      body += '<form class="answer-row"><input class="answer" aria-label="Your answer" autocomplete="off" spellcheck="false"><button class="btn">Check</button></form>';
+    }
+    body += `<div class="row helpers">${hintBtn}${solBtn}</div><div class="helpbox" aria-live="polite"></div>`;
+    el.innerHTML = body;
+    let hinted = false;
+    let answered = false;
+    const help = el.querySelector('.helpbox');
+    el.querySelectorAll('[data-act]').forEach((b) => {
+      b.onclick = () => {
+        hinted = true;
+        help.className = 'helpbox shown';
+        help.textContent = b.dataset.act === 'hint' ? 'Hint: ' + item.hint : 'Worked solution: ' + item.solution;
+      };
+    });
+    if (item.shell) {
+      const t = mountTerminal(el.querySelector('[data-term]'), new CM.Shell(item.shell));
+      setTimeout(() => t.input.focus(), 0);
+    }
+    const done = (resp) => {
+      if (answered) return;
+      answered = true;
+      el.querySelectorAll('.opt, .answer-row button, .answer').forEach((x) => { x.disabled = true; });
+      cb(PR.check(item, resp), hinted, resp);
+    };
+    if (item.kind === 'choice') {
+      el.querySelectorAll('.opt').forEach((b) => {
+        b.onclick = () => {
+          const k = Number(b.dataset.k);
+          b.classList.add(k === item.answer ? 'chosen-ok' : 'chosen-bad');
+          if (k !== item.answer) el.querySelector(`.opt[data-k="${item.answer}"]`).classList.add('chosen-ok');
+          done(k);
+        };
+      });
+    } else {
+      const f = el.querySelector('.answer-row');
+      const inp = f.querySelector('input');
+      if (!item.shell) setTimeout(() => inp.focus(), 0);
+      f.onsubmit = (e) => { e.preventDefault(); if (inp.value.trim()) done(inp.value); };
+    }
+  }
+
+  function feedback(item, ok, hinted) {
+    const sol = `<p class="worked"><strong>Worked solution for this problem:</strong>\n${esc(item.solution)}</p>`;
+    if (ok && !hinted) return `<div class="result ok">✓ Correct, unaided. Streak +1.</div>`;
+    if (ok) return `<div class="result bad">Correct, but you used help, so it doesn't count toward mastery. The next problem is new; try it unaided.</div>`;
+    const right = item.kind === 'choice' ? item.options[item.answer] : item.accept[0];
+    return `<div class="result bad">✗ Not this time. Answer: ${esc(right)}. Streak reset.</div>${sol}`;
+  }
+
+  function viewMasteryLesson(t, idx) {
+    const l = t.lessons[idx];
+    const cfg = PMAP[l.id];
+    const next = t.lessons[idx + 1];
+    const already = !!done[l.id];
+    const session = new PR.Session(cfg.gens, cfg.need);
+    app.innerHTML = `
+      <nav class="crumbs"><a href="#/track/${t.id}">${esc(t.title)}</a> / Lesson ${idx + 1} of ${t.lessons.length}</nav>
+      <div class="lesson">
+        <article class="explain">
+          <h1>${esc(l.title)}</h1>
+          ${l.body}
+          <p class="note">The examples above show the method. Practice problems are generated fresh every time, so you're applying the idea to new cases, not recalling these examples.</p>
+        </article>
+        <section class="practice">
+          <div class="steps"><span class="stp on" id="st1">1 · Practice to mastery</span>${cfg.explain ? '<span class="stp" id="st2">2 · Explain it</span>' : ''}</div>
+          <div class="meter" id="meter" aria-live="polite"></div>
+          <div id="pitem"></div>
+          <div id="pfb"></div>
+          <div class="nextrow" id="pnext" hidden><button class="btn" id="pnb">Next problem → (Enter)</button></div>
+          <div id="pexplain"></div>
+          <div class="nextrow" id="pdone" hidden>${next ? `<a class="btn" href="#/lesson/${t.id}/${next.id}">Next lesson: ${esc(next.title)} →</a>` : afterTrack(t)}</div>
+        </section>
+      </div>`;
+    const meter = document.getElementById('meter');
+    const drawMeter = () => {
+      const dots = Array.from({ length: cfg.need }, (_, i) => `<span class="dot ${i < session.streak ? 'on' : ''}"></span>`).join('');
+      meter.innerHTML = `<div class="dots">${dots}</div><small>${session.streak}/${cfg.need} correct in a row, unaided${already ? ' · already mastered (extra practice)' : ''} · ${session.correct}/${session.attempts} overall</small>`;
+    };
+    const itemEl = document.getElementById('pitem');
+    const fb = document.getElementById('pfb');
+    const nextRow = document.getElementById('pnext');
+    let waiting = false;
+    function ask() {
+      fb.innerHTML = '';
+      nextRow.hidden = true;
+      waiting = false;
+      const item = session.next();
+      drawMeter();
+      renderPracticeItem(itemEl, item, (ok, hinted, resp) => {
+        if (hinted) session.useHint();
+        const res = session.answer(resp);
+        drawMeter();
+        fb.innerHTML = feedback(item, ok, hinted);
+        if (res.mastered) return mastered();
+        nextRow.hidden = false;
+        waiting = true;
+        document.getElementById('pnb').focus();
+      });
+    }
+    document.getElementById('pnb').onclick = ask;
+    const keyNext = (e) => { if (e.key === 'Enter' && waiting && !e.target.closest('.term-in') && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); ask(); } };
+    document.addEventListener('keydown', keyNext);
+    window.addEventListener('hashchange', () => document.removeEventListener('keydown', keyNext), { once: true });
+
+    function mastered() {
+      itemEl.innerHTML = '';
+      fb.innerHTML = `<div class="result ok"><strong>Mastered.</strong> ${cfg.need} new problems in a row, unaided.</div>`;
+      if (!cfg.explain) return finish();
+      document.getElementById('st1').classList.remove('on');
+      document.getElementById('st2').classList.add('on');
+      const ex = cfg.explain;
+      const ph = document.getElementById('pexplain');
+      ph.innerHTML = `
+        <h2>Explain it in your own words</h2>
+        <pre class="question">${esc(ex.prompt)}</pre>
+        <textarea class="explainbox" id="ebox" rows="6" placeholder="Write your explanation. Aim for 2–4 sentences."></textarea>
+        <div class="row"><button class="btn" id="ecmp" disabled>Compare with a strong answer</button><small id="ecount"></small></div>
+        <div id="echeck"></div>`;
+      const box = document.getElementById('ebox');
+      const btn = document.getElementById('ecmp');
+      const MIN = 80;
+      box.oninput = () => {
+        const n = box.value.trim().length;
+        btn.disabled = n < MIN;
+        document.getElementById('ecount').textContent = n < MIN ? `${MIN - n} more characters` : 'Ready';
+      };
+      box.oninput();
+      box.focus();
+      btn.onclick = () => {
+        btn.disabled = true;
+        box.readOnly = true;
+        document.getElementById('echeck').innerHTML = `
+          <p>A strong explanation covers these points. Tick the ones your answer genuinely covered:</p>
+          <ul class="checklist">${ex.points.map((pt, i) => `<li><label><input type="checkbox" data-i="${i}"> ${esc(pt)}</label></li>`).join('')}</ul>
+          <p class="note">This isn't auto-graded. Be honest: anything you missed is what to re-read.</p>
+          <button class="btn" id="efin">Finish lesson</button>`;
+        document.getElementById('efin').onclick = () => {
+          const ticked = document.querySelectorAll('.checklist input:checked').length;
+          finish(ticked, ex.points.length);
+        };
+      };
+    }
+    function finish(ticked, total) {
+      markDone(l.id);
+      const msg = total !== undefined && ticked < total ? ` You covered ${ticked}/${total} points. Re-read the parts you missed; these questions will come back in Review.` : '';
+      document.getElementById('pexplain').insertAdjacentHTML('beforeend', `<div class="result ok">✓ Lesson complete.${esc(msg)}</div>`);
+      document.getElementById('pdone').hidden = false;
+    }
+    ask();
+  }
+
+  // ---------- mixed practice (interleaved across finished lessons) ----------
+  function viewMixed() {
+    const pool = [];
+    tracks.forEach((t) => t.lessons.forEach((l) => { if (done[l.id] && PMAP[l.id]) PMAP[l.id].gens.forEach((g) => pool.push({ g, l, t })); }));
+    if (!pool.length) {
+      app.innerHTML = '<section class="trackhead"><h1>Mixed practice</h1><p>Finish a lesson with practice problems first. Mixed practice then shuffles problems from everything you’ve mastered, so you have to recognize WHICH principle applies, not just how to apply it.</p><p><a class="btn" href="#/">Back to your path</a></p></section>';
+      return;
+    }
+    const N = 10;
+    let i = 0;
+    let right = 0;
+    let lastG = null;
+    app.innerHTML = `
+      <section class="trackhead"><h1>Mixed practice</h1>
+        <p>${N} new problems drawn from everything you've mastered, in random order. Mixing topics forces you to identify which principle applies, which is the skill exams and real incidents test (interleaving; Rohrer & Taylor, 2007).</p></section>
+      <section class="practice reviewcard">
+        <div class="mstatus" id="mxs"></div>
+        <div id="mxi"></div><div id="mxf"></div>
+        <div class="nextrow" id="mxn" hidden><button class="btn" id="mxb">Next →</button></div>
+      </section>`;
+    const st = document.getElementById('mxs');
+    function ask() {
+      document.getElementById('mxf').innerHTML = '';
+      document.getElementById('mxn').hidden = true;
+      if (i >= N) {
+        document.getElementById('mxi').innerHTML = `<div class="result ${right >= 8 ? 'ok' : 'bad'}"><strong>${right}/${N}</strong> correct and unaided.</div><p class="row"><button class="btn" id="mxagain">Another set</button> <a class="btn ghost" href="#/">Back to path</a></p>`;
+        document.getElementById('mxagain').onclick = viewMixed;
+        st.textContent = 'Set complete';
+        return;
+      }
+      let pickd;
+      do { pickd = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && pickd.g === lastG);
+      lastG = pickd.g;
+      const item = PR.make(pickd.g);
+      st.textContent = `Problem ${i + 1} of ${N} · ${right} right so far (topic hidden until you answer)`;
+      renderPracticeItem(document.getElementById('mxi'), item, (ok, hinted) => {
+        if (ok && !hinted) right++;
+        i++;
+        document.getElementById('mxf').innerHTML = feedback(item, ok, hinted) + `<p class="note">Topic: ${esc(item.topic)}, from "${esc(pickd.l.title)}" (${esc(pickd.t.title)})</p>`;
+        document.getElementById('mxn').hidden = false;
+      });
+    }
+    document.getElementById('mxb').onclick = ask;
+    ask();
+  }
+
   function viewSandbox() {
     app.innerHTML = `
       <section class="trackhead">
@@ -704,6 +934,7 @@
     if (parts[0] === 'review') return viewReview();
     if (parts[0] === 'missions') return viewMissions();
     if (parts[0] === 'drills') return viewDrills(parts[1]);
+    if (parts[0] === 'mixed') return viewMixed();
     if (parts[0] === 'exams') return viewExams();
     if (parts[0] === 'exam') return viewExam(parts[1]);
     if (parts[0] === 'mission') return viewMission(parts[1]);

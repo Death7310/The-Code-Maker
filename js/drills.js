@@ -82,7 +82,7 @@
           : toIp((base + s.size + rnd(random, 0, Math.min(s.size - 1, 200))) >>> 0);
         const same = subnet(other, prefix).network === s.network;
         return { kind, question: `Are ${ip} and ${other} in the same /${prefix} subnet? (yes/no)`, accept: [same ? 'yes' : 'no', same ? 'y' : 'n'],
-          explain: `${ip}/${prefix} is in ${s.network}–${s.broadcast}. ${other}/${prefix} is in network ${subnet(other, prefix).network}. ${same ? 'Same network.' : 'Different networks.'}` };
+          explain: `${ip}/${prefix} is in ${s.network}–${s.broadcast}. ${other}/${prefix} is in network ${subnet(other, prefix).network}. ${same ? 'Same network, so the answer is yes.' : 'Different networks, so the answer is no.'}` };
       }
       default:
         throw new Error('unknown kind ' + kind);

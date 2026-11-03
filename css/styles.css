@@ -197,3 +197,24 @@ details { margin-top: 10px; color: var(--muted); }
 .badtxt { color: var(--bad); font-weight: 600; }
 .oktxt { color: var(--accent); font-weight: 600; }
 .reviewcard + .reviewcard { margin-top: 16px; }
+
+/* ---- mastery practice ---- */
+.steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.stp { font-size: .8em; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.stp.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.meter { margin-bottom: 12px; }
+.dots { display: flex; gap: 6px; margin-bottom: 4px; }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent); }
+.dot.on { background: var(--accent); }
+.meter small { color: var(--muted); }
+.helpers { margin-top: 8px; }
+.btn.small { padding: 5px 10px; font-size: .85em; font-weight: 500; }
+.helpbox { display: none; }
+.helpbox.shown { display: block; white-space: pre-wrap; margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border: 1px dashed var(--border); color: var(--muted); font-size: .92em; }
+.worked { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: .92em; margin-top: 8px; }
+#pfb .result, #mxf .result { margin-top: 10px; }
+.explainbox { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); resize: vertical; }
+.checklist { list-style: none; padding: 0; }
+.checklist li { margin: 6px 0; }
+.checklist label { display: flex; gap: 8px; align-items: flex-start; }
+.practice .terminal { height: 260px; margin-top: 8px; }

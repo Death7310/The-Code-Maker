@@ -13,14 +13,18 @@
   const INTERVALS = [0, 1, 3, 7, 14, 30];
   const MAX_BOX = INTERVALS.length - 1;
 
-  // Collect every reviewable item from completed lessons.
-  function collect(tracks, done) {
+  // Collect every reviewable item from completed lessons. Lessons with
+  // generated practice (map) contribute one item per generator; each review
+  // then shows a NEW instance, so review tests the principle, not recall.
+  function collect(tracks, done, map) {
     const items = [];
     for (const t of tracks) {
       for (const l of t.lessons) {
         if (!done[l.id]) continue;
         const ex = l.exercise;
-        if (ex && (ex.type === 'quiz' || ex.type === 'input')) {
+        if (map && map[l.id]) {
+          map[l.id].gens.forEach((g) => items.push({ type: 'gen', gen: g, id: l.id + ':g:' + g, lesson: l.title, track: t.title }));
+        } else if (ex && (ex.type === 'quiz' || ex.type === 'input')) {
           items.push(Object.assign({ id: l.id + ':ex', lesson: l.title, track: t.title }, ex));
         }
         (l.review || []).forEach((r, i) => {
