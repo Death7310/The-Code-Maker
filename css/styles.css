@@ -176,3 +176,24 @@ details { margin-top: 10px; color: var(--muted); }
 .debrief h2 { margin-top: 0; }
 .terminal.big-ish { height: 420px; }
 .row { flex-wrap: wrap; }
+
+/* ---- drills & exams ---- */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tab { padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; color: var(--muted); background: var(--surface); }
+.tab.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.examcard { max-width: 760px; }
+.examcard .row { margin-top: 14px; }
+.examcard .answer { width: 100%; }
+.btn:disabled { opacity: .45; cursor: default; }
+.palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.pal { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font: inherit; font-size: .8em; cursor: pointer; }
+.pal.ans { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.pal.flag { box-shadow: inset 0 -3px 0 var(--bad); }
+.pal.cur { outline: 2px solid var(--accent); outline-offset: 1px; }
+.domainlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.dname { font-weight: 600; margin-bottom: 4px; }
+.bar span.weak { background: var(--bad); }
+.missed { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
+.badtxt { color: var(--bad); font-weight: 600; }
+.oktxt { color: var(--accent); font-weight: 600; }
+.reviewcard + .reviewcard { margin-top: 16px; }

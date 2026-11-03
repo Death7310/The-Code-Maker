@@ -7,6 +7,8 @@
   'use strict';
   const { tracks, path, coding, roadmap, optional, rationale } = CM.curriculum;
   const MS = CM.missions;
+  const DR = CM.drills;
+  const EX = CM.exams;
   const R = CM.review;
   const app = document.getElementById('app');
 
@@ -21,6 +23,8 @@
   const rstate = load('codemaker.review.v1');
   const mresults = load('codemaker.missions.v1');
   const unlocks = load('codemaker.unlock.v1');
+  const drillStats = load('codemaker.drills.v1');
+  const examStats = load('codemaker.exams.v1');
   function markDone(id) { done[id] = true; save('codemaker.progress.v1', done); updateBadge(); }
 
   // ---------- helpers ----------
@@ -153,6 +157,11 @@
       </section>
       <h2 class="sect">Your certification path</h2>
       <ol class="pathlist">${steps}</ol>
+      <h2 class="sect">Practice tools</h2>
+      <section class="grid">
+        <a class="card" href="#/drills/subnet"><span class="tag">Drills</span><h3>Subnetting, binary & ports</h3><p>Endless generated problems with worked solutions. Ten minutes a day makes subnetting automatic.</p></a>
+        <a class="card" href="#/exams"><span class="tag">Practice exams</span><h3>A+, Network+, Security+</h3><p>Exam-style sets with shuffled options and results by official domain, so you know what to study next.</p></a>
+      </section>
       <h2 class="sect">Missions: scenarios that unlock as you progress</h2>
       <section class="grid">${missionCards()}</section>
       <h2 class="sect">Coding skills, learned alongside the path</h2>
@@ -483,6 +492,188 @@
     render();
   }
 
+
+  // ---------- drills ----------
+  function viewDrills(kind) {
+    kind = DR.DRILLS[kind] ? kind : 'subnet';
+    const tabs = Object.keys(DR.DRILLS).map((k) => `<a class="tab ${k === kind ? 'on' : ''}" href="#/drills/${k}">${esc(DR.DRILLS[k].title)}</a>`).join('');
+    const st = drillStats[kind] || { best: 0 };
+    let session = { right: 0, total: 0, streak: 0 };
+    app.innerHTML = `
+      <section class="trackhead">
+        <h1>Drills</h1>
+        <p>Endless generated problems, each with a worked solution. Speed comes from repetition: aim for accuracy first, then speed.</p>
+        <nav class="tabs">${tabs}</nav>
+      </section>
+      <section class="practice reviewcard">
+        <p class="note">${esc(DR.DRILLS[kind].blurb)}</p>
+        <div class="mstatus" id="dstat"></div>
+        <pre class="question" id="dq"></pre>
+        <form class="answer-row" id="dform"><input class="answer" id="da" aria-label="Your answer" autocomplete="off" spellcheck="false"><button class="btn">Check</button></form>
+        <div id="dres" class="result" aria-live="polite"></div>
+        <div class="nextrow" id="dnext" hidden><button class="btn" id="dnb">Next problem → (Enter)</button></div>
+      </section>`;
+    let prob = null;
+    let answered = false;
+    const stat = () => {
+      document.getElementById('dstat').textContent = `This session: ${session.right}/${session.total} · streak ${session.streak} · best streak ${st.best}`;
+    };
+    const next = () => {
+      prob = DR.DRILLS[kind].make(Math.random);
+      answered = false;
+      document.getElementById('dq').textContent = prob.question;
+      document.getElementById('dres').className = 'result';
+      document.getElementById('dres').textContent = '';
+      document.getElementById('dnext').hidden = true;
+      const a = document.getElementById('da');
+      a.value = '';
+      a.focus();
+      stat();
+    };
+    document.getElementById('dform').onsubmit = (e) => {
+      e.preventDefault();
+      const a = document.getElementById('da');
+      if (answered) return next();
+      if (!a.value.trim()) return;
+      answered = true;
+      const ok = DR.check(prob, a.value);
+      session.total++;
+      if (ok) { session.right++; session.streak++; } else session.streak = 0;
+      if (session.streak > st.best) { st.best = session.streak; drillStats[kind] = st; save('codemaker.drills.v1', drillStats); }
+      const res = document.getElementById('dres');
+      res.className = 'result ' + (ok ? 'ok' : 'bad');
+      res.textContent = (ok ? '✓ Correct. ' : `✗ Answer: ${prob.accept[0]}. `) + prob.explain;
+      document.getElementById('dnext').hidden = false;
+      stat();
+    };
+    document.getElementById('dnb').onclick = next;
+    next();
+  }
+
+  // ---------- practice exams ----------
+  function viewExams() {
+    const cards = EX.EXAMS.map((e) => {
+      const t = findTrack(e.track);
+      const st = examStats[e.id];
+      return `<a class="card" href="#/exam/${e.id}">
+        <span class="tag">${esc(e.code)}${st ? ' · best ' + st.best + '%' : ''}</span>
+        <h3>${esc(e.title)}</h3>
+        <p>${e.length} questions drawn from a pool of ${EX.pool(e, tracks).length}, with options shuffled every attempt. No feedback until you submit, just like the real exam.</p>
+        <small>${trackProgress(t) === t.lessons.length ? 'Stage complete, ready' : `Best after finishing ${esc(t.title)} (${trackProgress(t)}/${t.lessons.length})`}</small>
+      </a>`;
+    }).join('');
+    app.innerHTML = `
+      <section class="trackhead">
+        <h1>Practice exams</h1>
+        <p>Timed-style practice with results broken down by official exam domain, so you can see exactly where to study next.</p>
+      </section>
+      <section class="grid">${cards}</section>
+      <section class="callout">
+        <h3>How to use these honestly</h3>
+        <ul>
+          <li>The pools are small, so you'll start recognizing questions. When your score climbs because you remember the questions rather than understand them, these stop measuring readiness.</li>
+          <li>Before booking a real exam, also take full-length practice exams from a large commercial question bank. A common rule of thumb is scoring 85%+ consistently on questions you haven't seen.</li>
+          <li>CompTIA reports scaled scores (for example, 675/900 for A+ Core 1), which don't convert directly to a percentage.</li>
+        </ul>
+      </section>`;
+  }
+
+  function viewExam(id) {
+    const exam = EX.EXAMS.find((e) => e.id === id);
+    if (!exam) return viewNotFound();
+    const qs = EX.build(exam, tracks, Math.random);
+    const answers = new Array(qs.length);
+    const flags = new Set();
+    let i = 0;
+    app.innerHTML = `
+      <nav class="crumbs"><a href="#/exams">Practice exams</a> / ${esc(exam.code)}</nav>
+      <section class="practice reviewcard examcard">
+        <div class="mstatus" id="estat"></div>
+        <div id="eq"></div>
+        <div class="row">
+          <button class="btn ghost" id="eprev">← Previous</button>
+          <button class="btn ghost" id="eflag">Flag</button>
+          <button class="btn ghost" id="enext">Next →</button>
+          <button class="btn" id="esubmit">Submit exam</button>
+        </div>
+        <div class="palette" id="epal"></div>
+      </section>`;
+    const updateStatus = () => {
+      const answered = answers.filter((a) => a !== undefined && a !== '').length;
+      document.getElementById('estat').textContent = `Question ${i + 1} of ${qs.length} · answered ${answered} · flagged ${flags.size}`;
+    };
+    const render = () => {
+      const q = qs[i];
+      updateStatus();
+      const el = document.getElementById('eq');
+      if (q.type === 'input') {
+        el.innerHTML = `<pre class="question">${esc(q.question)}</pre><input class="answer" id="ein" aria-label="Your answer" autocomplete="off" spellcheck="false" value="${esc(answers[i] || '')}">`;
+        document.getElementById('ein').oninput = (e) => { answers[i] = e.target.value; updateStatus(); renderPal(); };
+      } else {
+        el.innerHTML = `<pre class="question">${esc(q.question)}</pre><div class="opts">${q.options.map((o, k) =>
+          `<button class="opt ${answers[i] === k ? 'chosen-ok' : ''}" data-k="${k}">${esc(o)}</button>`).join('')}</div>`;
+        el.querySelectorAll('.opt').forEach((b) => {
+          b.onclick = () => { answers[i] = Number(b.dataset.k); render(); };
+        });
+      }
+      document.getElementById('eflag').textContent = flags.has(i) ? 'Unflag' : 'Flag';
+      document.getElementById('eprev').disabled = i === 0;
+      document.getElementById('enext').disabled = i === qs.length - 1;
+      renderPal();
+    };
+    const renderPal = () => {
+      document.getElementById('epal').innerHTML = qs.map((q, k) => {
+        const a = answers[k] !== undefined && answers[k] !== '';
+        return `<button class="pal ${a ? 'ans' : ''} ${flags.has(k) ? 'flag' : ''} ${k === i ? 'cur' : ''}" data-k="${k}" aria-label="Question ${k + 1}">${k + 1}</button>`;
+      }).join('');
+      document.querySelectorAll('.pal').forEach((b) => { b.onclick = () => { i = Number(b.dataset.k); render(); }; });
+    };
+    document.getElementById('eprev').onclick = () => { if (i > 0) { i--; render(); } };
+    document.getElementById('enext').onclick = () => { if (i < qs.length - 1) { i++; render(); } };
+    document.getElementById('eflag').onclick = () => { flags.has(i) ? flags.delete(i) : flags.add(i); render(); };
+    document.getElementById('esubmit').onclick = () => {
+      const left = qs.length - answers.filter((a) => a !== undefined && a !== '').length;
+      if (left && !confirm(`${left} question(s) unanswered. Submit anyway?`)) return;
+      showResults(exam, qs, answers);
+    };
+    render();
+  }
+
+  function showResults(exam, qs, answers) {
+    const r = EX.grade(exam, qs, answers);
+    const st = examStats[exam.id] || { best: 0, history: [] };
+    st.best = Math.max(st.best, r.pct);
+    st.history = (st.history || []).concat([{ pct: r.pct, at: Date.now() }]).slice(-10);
+    examStats[exam.id] = st;
+    save('codemaker.exams.v1', examStats);
+    const rows = Object.values(r.byDomain).map((d) => {
+      const pct = d.total ? Math.round((d.correct / d.total) * 100) : null;
+      return `<li class="drow"><div class="dname">${esc(d.name)} <small>(${d.weight}% of exam)</small></div>
+        <div class="bar" role="img" aria-label="${pct === null ? 'not sampled' : pct + '%'}"><span style="width:${pct || 0}%" class="${pct !== null && pct < 70 ? 'weak' : ''}"></span></div>
+        <small>${pct === null ? 'not sampled this attempt' : `${d.correct}/${d.total} · ${pct}%`}</small></li>`;
+    }).join('');
+    const missed = qs.map((q, k) => ({ q, a: answers[k] })).filter((x) => !EX.isCorrect(x.q, x.a));
+    const show = (q, a) => (a === undefined || a === '' ? '(no answer)' : q.type === 'input' ? a : q.options[a]);
+    const right = (q) => (q.type === 'input' ? q.accept[0] : q.options[q.answer]);
+    const weakest = Object.values(r.byDomain).filter((d) => d.total).sort((a, b) => a.correct / a.total - b.correct / b.total)[0];
+    app.innerHTML = `
+      <nav class="crumbs"><a href="#/exams">Practice exams</a> / Results</nav>
+      <section class="trackhead">
+        <h1>${esc(exam.title)}: ${r.pct}%</h1>
+        <p>${r.correct} of ${r.total} correct. Best so far: ${st.best}%. ${weakest ? `Weakest domain this attempt: <strong>${esc(weakest.name)}</strong>. Study that first.` : ''}</p>
+        <p class="row"><a class="btn" href="#/exam/${exam.id}" id="retake">Retake (new shuffle)</a> <a class="btn ghost" href="#/track/${exam.track}">Back to lessons</a></p>
+      </section>
+      <section class="practice reviewcard"><h2>By domain</h2><ul class="domainlist">${rows}</ul></section>
+      <section class="practice reviewcard"><h2>Missed questions (${missed.length})</h2>
+        ${missed.length ? missed.map((x) => `<div class="missed"><pre class="question">${esc(x.q.question)}</pre>
+          <p><span class="badtxt">Your answer:</span> ${esc(show(x.q, x.a))}<br><span class="oktxt">Correct:</span> ${esc(right(x.q))}</p>
+          <p class="note">${esc(x.q.explain)}</p></div>`).join('') : '<p>None. Excellent.</p>'}
+      </section>`;
+    // Re-render even though the hash may be unchanged.
+    document.getElementById('retake').onclick = (e) => { e.preventDefault(); viewExam(exam.id); };
+    window.scrollTo(0, 0);
+  }
+
   function viewSandbox() {
     app.innerHTML = `
       <section class="trackhead">
@@ -504,7 +695,7 @@
     window.scrollTo(0, 0);
     document.querySelectorAll('#nav a').forEach((a) => {
       const h = a.getAttribute('href').replace(/^#\/?/, '');
-      a.classList.toggle('active', h ? parts[0] === h || (h === 'missions' && parts[0] === 'mission') : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
+      a.classList.toggle('active', h ? parts[0] === h || (h === 'missions' && parts[0] === 'mission') || (h === 'exams' && parts[0] === 'exam') : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
     });
     updateBadge();
     if (!parts.length) return viewHome();
@@ -512,6 +703,9 @@
     if (parts[0] === 'lesson') return viewLesson(parts[1], parts[2]);
     if (parts[0] === 'review') return viewReview();
     if (parts[0] === 'missions') return viewMissions();
+    if (parts[0] === 'drills') return viewDrills(parts[1]);
+    if (parts[0] === 'exams') return viewExams();
+    if (parts[0] === 'exam') return viewExam(parts[1]);
     if (parts[0] === 'mission') return viewMission(parts[1]);
     if (parts[0] === 'roadmap' || parts[0] === 'career') return viewRoadmap();
     if (parts[0] === 'sandbox') return viewSandbox();

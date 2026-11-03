@@ -170,6 +170,153 @@ man COMMAND      read the manual for a command</pre>
           explain: 'sudo runs a single command with elevated (root) privileges.',
         },
       },
+      {
+        id: 'c8',
+        title: 'Windows editions and built-in tools',
+        body: `
+<p><strong>Home vs Pro</strong>: Pro adds <strong>BitLocker</strong>, <strong>Group Policy Editor</strong> (gpedit.msc), <strong>joining a domain</strong>, and acting as a <strong>Remote Desktop host</strong>. Exam scenarios often hinge on "this feature doesn't exist in Home".</p>
+<p>Tools to know, and how to launch them:</p>
+<pre>taskmgr        Task Manager: processes, performance, startup apps
+eventvwr.msc   Event Viewer: system, application and security logs
+devmgmt.msc    Device Manager: hardware and drivers
+diskmgmt.msc   Disk Management: partitions, volumes
+services.msc   Services: start/stop/disable services
+taskschd.msc   Task Scheduler: scheduled jobs (also where malware hides)
+msconfig       System Configuration: boot options, Safe Mode
+regedit        Registry Editor (be careful!)
+resmon / perfmon  Resource and Performance Monitor</pre>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A user on Windows 11 Home wants to encrypt their drive with BitLocker and can’t find it. Why?',
+          options: ['BitLocker requires Pro (or higher)', 'Their RAM is too small', 'BitLocker is only on Linux', 'They need a new monitor'],
+          answer: 0,
+          explain: 'BitLocker management needs Pro/Enterprise/Education. Home has only the more limited "Device Encryption".',
+        },
+        review: [
+          { question: 'Which tool shows hardware with driver problems (yellow warning icons)?', options: ['Event Viewer', 'Device Manager', 'Disk Management', 'Task Scheduler'], answer: 1, explain: 'devmgmt.msc.' },
+          { question: 'Where would you look for a record of failed logon attempts on Windows?', options: ['Event Viewer (Security log)', 'Disk Management', 'msconfig', 'Device Manager'], answer: 0, explain: 'The Security log records logon events (4624/4625).' },
+          { question: 'Which edition can join a corporate Active Directory domain?', options: ['Home', 'Pro'], answer: 1, explain: 'Domain join requires Pro or higher.' },
+        ],
+      },
+      {
+        id: 'c9',
+        title: 'Troubleshooting Windows problems',
+        body: `
+<pre>Symptom                          First things to try
+Blue screen (BSOD)               Note the stop code; recent driver/update? Roll back the driver, check RAM
+Very slow                        Task Manager: CPU/RAM/disk hogs; startup apps; malware scan
+Won't boot after an update       Startup Repair / System Restore / uninstall the update (WinRE)
+App crashes                      Update/repair/reinstall the app; check Event Viewer
+Unable to start in normal mode   Safe Mode (minimal drivers) to isolate the cause</pre>
+<p><strong>System Restore</strong> rolls back system files, drivers and settings, but <em>not</em> personal files. A <strong>reset</strong> reinstalls Windows, with the option to keep files.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'BSODs started right after installing a new graphics driver. Best first step?',
+          options: ['Replace the motherboard', 'Roll back the driver in Device Manager', 'Reinstall Windows', 'Replace the monitor'],
+          answer: 1,
+          explain: 'Undo the most recent change first: it’s the most likely cause and the least disruptive fix.',
+        },
+        review: [
+          { question: 'Does System Restore delete your personal documents?', options: ['Yes', 'No'], answer: 1, explain: 'It changes system files and settings, not personal files.' },
+        ],
+      },
+      {
+        id: 'c10',
+        title: 'Malware removal: the CompTIA steps',
+        body: `
+<p>Memorize this order. It's tested directly.</p>
+<ol>
+  <li><strong>Investigate and verify</strong> the malware symptoms.</li>
+  <li><strong>Quarantine</strong> the infected system (disconnect it from the network).</li>
+  <li><strong>Disable System Restore</strong> (Windows), so infected restore points can't bring it back.</li>
+  <li><strong>Remediate</strong>: update the anti-malware software, then scan and remove (Safe Mode or a boot-time scan if needed).</li>
+  <li><strong>Schedule scans and run updates.</strong></li>
+  <li><strong>Enable System Restore</strong> and create a new, clean restore point.</li>
+  <li><strong>Educate the end user.</strong></li>
+</ol>`,
+        exercise: {
+          type: 'quiz',
+          question: 'You’ve confirmed a PC is infected. What’s the NEXT step?',
+          options: ['Educate the user', 'Quarantine the system', 'Create a restore point', 'Schedule scans'],
+          answer: 1,
+          explain: 'Isolate it before it spreads: quarantine is step 2.',
+        },
+        review: [
+          { question: 'Why disable System Restore during malware removal?', options: ['It speeds up the PC', 'Restore points may contain the malware', 'It is required by law', 'To free RAM'], answer: 1, explain: 'An infected restore point could reinstall the malware later.' },
+          { question: 'What is the LAST step of the malware removal process?', options: ['Remediate', 'Educate the end user', 'Quarantine', 'Disable System Restore'], answer: 1, explain: 'Education helps prevent the next infection.' },
+        ],
+      },
+      {
+        id: 'c11',
+        title: 'Scripting basics in A+',
+        body: `
+<p>A+ expects you to recognize script types and what they're used for (not to write complex code):</p>
+<pre>.bat   Windows batch file (Command Prompt)
+.ps1   PowerShell
+.vbs   VBScript (legacy Windows)
+.sh    Bash / Linux shell script
+.js    JavaScript
+.py    Python</pre>
+<p>Common uses: automating backups, mapping network drives, installing software, restarting machines, gathering information.</p>
+<p>Risks: a script can accidentally make destructive changes, open security holes, or use up resources. Test scripts first, and know what any script does before you run it. Your Bash, PowerShell and Python tracks build on exactly this.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'An admin wants to automate a Windows task using Windows’ modern object-based shell. Which file type?',
+          options: ['.sh', '.ps1', '.vbs', '.py'],
+          answer: 1,
+          explain: '.ps1 is a PowerShell script.',
+        },
+        review: [
+          { question: 'A .sh file is a script for…', options: ['PowerShell', 'Linux/Unix shells like Bash', 'Excel', 'VBScript'], answer: 1, explain: '.sh = shell script.' },
+        ],
+      },
+      {
+        id: 'c12',
+        title: 'Remote access and wireless security',
+        body: `
+<ul>
+  <li><strong>RDP</strong> (port 3389): full Windows desktop remotely. Don't expose it directly to the internet; put it behind a VPN or gateway.</li>
+  <li><strong>SSH</strong> (port 22): secure command-line access, mostly Linux.</li>
+  <li><strong>VPN</strong>: an encrypted tunnel into the company network.</li>
+  <li><strong>RMM</strong> (remote monitoring and management): tools IT providers use to manage many machines. Attackers abuse them too.</li>
+  <li><strong>Screen-sharing tools</strong>: always verify who you're letting in. "Tech support" scams rely on them.</li>
+</ul>
+<p>Wireless authentication: <strong>WPA3-Personal</strong> (uses SAE) or <strong>WPA2/WPA3-Enterprise</strong> (each user authenticates through <strong>RADIUS</strong> instead of a shared password).</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A company wants each employee to log in to Wi-Fi with their own credentials instead of a shared password. What do they need?',
+          options: ['WEP', 'WPA2/WPA3-Enterprise with RADIUS', 'An open network', 'WPS'],
+          answer: 1,
+          explain: 'Enterprise mode authenticates each user individually through a RADIUS server.',
+        },
+        review: [
+          { question: 'A caller says they’re from "Microsoft support" and asks you to install a screen-sharing app. This is most likely…', options: ['Routine support', 'A tech support scam', 'A Windows update', 'An RMM upgrade'], answer: 1, explain: 'Legitimate vendors don’t cold-call for remote access.' },
+        ],
+      },
+      {
+        id: 'c13',
+        title: 'Data handling, disposal and professionalism',
+        body: `
+<ul>
+  <li><strong>PII</strong> (personally identifiable information), <strong>PHI</strong> (health information) and payment data need special care and are often regulated.</li>
+  <li><strong>Chain of custody</strong>: documenting everyone who handled evidence, and when. Without it, evidence can be challenged.</li>
+  <li><strong>Data destruction</strong>: shredding, drilling, incineration, or <strong>degaussing</strong> (which only works on <em>magnetic</em> media like HDDs and tape, <em>not SSDs</em>). Get a <strong>certificate of destruction</strong> from vendors.</li>
+  <li>To <em>reuse</em> a drive: a secure erase or overwrite. A quick format alone doesn't remove the data.</li>
+  <li><strong>Licensing</strong>: personal vs corporate licenses, open source, EULAs.</li>
+  <li><strong>Professionalism</strong>: be on time, listen actively, don't interrupt, avoid jargon with users, set expectations, and keep customers' data confidential.</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A company is retiring SSDs that held customer data. Which method does NOT reliably destroy the data?',
+          options: ['Shredding', 'Degaussing', 'Incineration', 'Drilling through the chips'],
+          answer: 1,
+          explain: 'SSDs store data in flash memory, not magnetically, so degaussing doesn’t affect them.',
+        },
+        review: [
+          { question: 'The documented history of who handled evidence is called…', options: ['Chain of custody', 'EULA', 'Change management', 'RAID'], answer: 0, explain: 'Chain of custody keeps evidence admissible.' },
+          { question: 'Does a quick format remove the data from a drive?', options: ['Yes, permanently', 'No, the data can often be recovered'], answer: 1, explain: 'A quick format only resets the file system structures.' },
+        ],
+      },
     ],
   };
 })(typeof window !== 'undefined' ? window : globalThis);

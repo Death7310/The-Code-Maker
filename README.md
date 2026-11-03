@@ -10,6 +10,8 @@ Coding tracks in **Bash, PowerShell and Python** (the three languages named in t
 
 **Missions** are investigation scenarios inside a fictional company. You work through evidence files in the terminal, answer questions, and make decisions that a simulated adversary reacts to. They unlock as you finish stages, and the support fades as you advance (Guided → Supported → Independent): phishing, SSH brute force, ransomware, a public S3 bucket, a leaked Azure secret, and a penetration-test engagement with scope and ethics pressure. All names, domains (`.example`) and IPs (RFC 5737 documentation ranges) are fictional.
 
+**Drills** generate endless subnetting, binary and port problems, each with a worked solution. **Practice exams** (A+ Core 1/2, Network+, Security+) pick questions in proportion to the official domain weights, shuffle the options, and report results by domain.
+
 These lessons cover the skeleton of each exam, not all of it. Pair each stage with a complete study source and CompTIA's official objectives.
 
 Everything runs in a simulated environment. Nothing touches real systems.
@@ -34,6 +36,8 @@ js/content/*.js       one file per track (lessons + exercises as data)
 js/curriculum.js      path order, coding tracks, certification roadmap
 js/review.js          spaced-review (Leitner) scheduling
 js/missions.js        scenario missions: evidence files, steps, scoring
+js/drills.js          generated subnetting / binary / port problems
+js/exams.js           practice exams: domain-weighted question selection and grading
 js/python-runner.js   lazy Pyodide loader
 js/app.js             router, views, progress
 tests/                node:test suites

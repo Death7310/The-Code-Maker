@@ -181,6 +181,153 @@
           { question: 'What comes right after "Identify the problem"?', options: ['Test the theory', 'Establish a theory of probable cause', 'Document findings', 'Implement the solution'], answer: 1, explain: 'Identify → theory → test → plan/implement → verify → document.' },
         ],
       },
+      {
+        id: 'a8',
+        title: 'Motherboards, CPUs and firmware',
+        body: `
+<ul>
+  <li><strong>Form factors</strong>: ATX (full size), microATX (smaller), mini-ITX (very small). The case must fit the board.</li>
+  <li><strong>Expansion slots</strong>: PCIe x1/x4/x16. Graphics cards use x16.</li>
+  <li><strong>CPU sockets</strong> must match the CPU (Intel LGA vs AMD AM5, for example). Apply thermal paste between the CPU and its cooler.</li>
+  <li><strong>BIOS/UEFI</strong>: firmware that starts the hardware and boots the OS. UEFI is the modern replacement for BIOS.</li>
+  <li><strong>Secure Boot</strong> (a UEFI feature): only lets signed, trusted bootloaders run, which blocks boot-level malware.</li>
+  <li><strong>TPM</strong> (Trusted Platform Module): a chip that securely stores encryption keys. BitLocker and Windows 11 rely on it.</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Which feature helps prevent malware from loading before the operating system starts?',
+          options: ['Hyper-threading', 'Secure Boot', 'PCIe x16', 'microATX'],
+          answer: 1,
+          explain: 'Secure Boot verifies the bootloader’s signature before letting it run.',
+        },
+        review: [
+          { question: 'BitLocker drive encryption stores its keys most securely in…', options: ['RAM', 'The TPM', 'The PSU', 'A text file'], answer: 1, explain: 'The TPM is a dedicated, tamper-resistant chip for keys.' },
+          { question: 'A graphics card normally uses which slot?', options: ['PCIe x1', 'PCIe x16', 'M.2', 'SATA'], answer: 1, explain: 'PCIe x16 gives a GPU the most lanes.' },
+        ],
+      },
+      {
+        id: 'a9',
+        title: 'RAID: combining disks',
+        body: `
+<pre>RAID 0   striping           min 2 disks   fast, NO redundancy (one disk fails = all data lost)
+RAID 1   mirroring          min 2 disks   exact copy; survives 1 failure
+RAID 5   striping + parity  min 3 disks   survives 1 failure; good capacity
+RAID 10  mirror + stripe    min 4 disks   fast and redundant</pre>
+<p><strong>RAID is not a backup.</strong> It protects against a disk failing, but not against deletion, ransomware or fire. Those still need backups.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A server has 3 disks and needs to survive one disk failure while keeping as much capacity as possible. Which RAID level?',
+          options: ['RAID 0', 'RAID 1', 'RAID 5', 'RAID 10'],
+          answer: 2,
+          explain: 'RAID 5 needs at least 3 disks, tolerates one failure, and only gives up one disk’s worth of capacity to parity.',
+        },
+        review: [
+          { question: 'Which RAID level offers NO redundancy?', options: ['RAID 0', 'RAID 1', 'RAID 5', 'RAID 10'], answer: 0, explain: 'RAID 0 is striping only.' },
+          { type: 'input', question: 'What is the minimum number of disks for RAID 10?', accept: ['4', 'four'], explain: 'Two mirrored pairs, striped together.' },
+        ],
+      },
+      {
+        id: 'a10',
+        title: 'Wireless standards',
+        body: `
+<pre>802.11a        5 GHz          (old)
+802.11b        2.4 GHz        (old)
+802.11g        2.4 GHz        (old)
+802.11n   Wi-Fi 4   2.4 + 5 GHz
+802.11ac  Wi-Fi 5   5 GHz
+802.11ax  Wi-Fi 6   2.4 + 5 GHz   (Wi-Fi 6E adds 6 GHz)</pre>
+<ul>
+  <li><strong>2.4 GHz</strong>: longer range, gets through walls better, slower, more crowded. Only 3 non-overlapping channels (1, 6 and 11).</li>
+  <li><strong>5 GHz</strong>: faster with more channels, but shorter range.</li>
+</ul>
+<p>Security: use <strong>WPA3</strong> (or WPA2 with AES at minimum). Never WEP. Disable <strong>WPS</strong>, which has known weaknesses.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Users at the far end of a warehouse lose 5 GHz Wi-Fi but get a weak 2.4 GHz signal. Why?',
+          options: ['5 GHz has shorter range than 2.4 GHz', '2.4 GHz is newer', '5 GHz is blocked by DNS', 'The PSU is failing'],
+          answer: 0,
+          explain: 'Higher frequencies don’t travel as far or pass through obstacles as well.',
+        },
+        review: [
+          { question: 'Which are the non-overlapping 2.4 GHz channels?', options: ['1, 2, 3', '1, 6, 11', '36, 40, 44', '5, 10, 15'], answer: 1, explain: 'Channels 1, 6 and 11.' },
+          { question: '802.11ax is also known as…', options: ['Wi-Fi 4', 'Wi-Fi 5', 'Wi-Fi 6', 'Bluetooth 5'], answer: 2, explain: '802.11ax = Wi-Fi 6.' },
+        ],
+      },
+      {
+        id: 'a11',
+        title: 'SOHO networks',
+        body: `
+<p>Small office/home office (SOHO) routers combine a router, switch, Wi-Fi access point, firewall and DHCP server in one box. Secure setup:</p>
+<ul>
+  <li>Change the <strong>default admin password</strong> and update the <strong>firmware</strong>.</li>
+  <li>Use WPA3/WPA2-AES, disable WPS, and consider disabling <strong>UPnP</strong>, which lets devices open ports on their own.</li>
+  <li><strong>DHCP reservation</strong>: always give a device (like a printer) the same IP.</li>
+  <li><strong>Port forwarding</strong>: sends inbound traffic on a port to one internal device. It exposes that device to the internet, so use it sparingly.</li>
+  <li>Put guest Wi-Fi on a separate network.</li>
+</ul>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A small office printer keeps getting a different IP, which breaks printing. What’s the best fix on the SOHO router?',
+          options: ['Port forwarding', 'A DHCP reservation for the printer', 'Disable DHCP entirely', 'Enable UPnP'],
+          answer: 1,
+          explain: 'A reservation ties an IP to the printer’s MAC address, so DHCP always hands it the same one.',
+        },
+        review: [
+          { question: 'What is the FIRST thing to change on a new SOHO router?', options: ['The Wi-Fi channel', 'The default admin password', 'The case color', 'The DNS suffix'], answer: 1, explain: 'Default credentials are public knowledge.' },
+        ],
+      },
+      {
+        id: 'a12',
+        title: 'Printers',
+        body: `
+<p>The <strong>laser printing process</strong> is a classic exam topic. Learn the order:</p>
+<ol>
+  <li><strong>Processing</strong>: the page is turned into an image in memory.</li>
+  <li><strong>Charging</strong>: the drum gets a uniform negative charge.</li>
+  <li><strong>Exposing</strong>: a laser draws the image on the drum.</li>
+  <li><strong>Developing</strong>: toner sticks to the drawn areas.</li>
+  <li><strong>Transferring</strong>: toner moves from the drum to the paper.</li>
+  <li><strong>Fusing</strong>: heat and pressure melt the toner onto the paper.</li>
+  <li><strong>Cleaning</strong>: leftover toner and charge are removed from the drum.</li>
+</ol>
+<p>Other types: <strong>inkjet</strong> (liquid ink), <strong>thermal</strong> (heat-sensitive paper, such as receipts), <strong>impact</strong> (multipart forms). Symptom clue: toner that <em>smears off</em> the page points to the <strong>fuser</strong>.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'Printed pages come out with toner that rubs off with a finger. Which part is most likely failing?',
+          options: ['The laser', 'The fuser', 'The pickup roller', 'The network card'],
+          answer: 1,
+          explain: 'The fuser melts toner onto paper. If it isn’t hot enough, the toner stays loose.',
+        },
+        review: [
+          { question: 'Which laser printing step comes right after Developing?', options: ['Charging', 'Transferring', 'Fusing', 'Cleaning'], answer: 1, explain: 'Processing → Charging → Exposing → Developing → Transferring → Fusing → Cleaning.' },
+          { question: 'Store receipt printers are usually which type?', options: ['Laser', 'Inkjet', 'Thermal', 'Impact'], answer: 2, explain: 'Thermal printers use heat-sensitive paper.' },
+        ],
+      },
+      {
+        id: 'a13',
+        title: 'Hardware troubleshooting by symptom',
+        body: `
+<pre>Symptom                                   Likely cause
+No power at all, no fans                  PSU, power cable, outlet
+Fans spin, no display, beeps              RAM or GPU seating/failure (check beep/POST codes)
+Random reboots / shutdowns under load     Overheating (dust, failed fan, old thermal paste) or PSU
+Grinding / clicking noise                 Failing HDD, so back it up NOW
+"No boot device found"                    Boot order, failed/disconnected drive
+Wrong time after every power-off          Dead CMOS battery
+Swollen laptop battery                    Stop using it and replace it safely (fire risk)</pre>
+<p>Use the troubleshooting method from lesson 7 for all of these: theory, test, then act.</p>`,
+        exercise: {
+          type: 'quiz',
+          question: 'A PC loses its date and time every time it’s unplugged. What do you replace?',
+          options: ['The PSU', 'The CMOS battery', 'The RAM', 'The hard drive'],
+          answer: 1,
+          explain: 'The CMOS battery keeps firmware settings and the clock running when the PC has no power.',
+        },
+        review: [
+          { question: 'A desktop shuts off only during games, and the case is full of dust. Most likely cause?', options: ['Overheating', 'DNS failure', 'Wrong time zone', 'Bad keyboard'], answer: 0, explain: 'Heavy load plus poor cooling makes the system shut down to protect itself.' },
+          { question: 'A hard drive starts clicking. What’s the FIRST priority?', options: ['Defragment it', 'Back up the data immediately', 'Ignore it', 'Update the BIOS'], answer: 1, explain: 'Mechanical noises mean the drive may fail soon. Save the data first.' },
+        ],
+      },
     ],
   };
 })(typeof window !== 'undefined' ? window : globalThis);

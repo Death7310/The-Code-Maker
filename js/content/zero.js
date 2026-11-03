@@ -19,7 +19,7 @@
   <li><strong>Spaced practice:</strong> reviewing the same material over several days and weeks beats cramming it in one session (Cepeda et al., 2006).</li>
 </ul>
 <p>This app is built around both. Every lesson ends with a question you have to answer, and the <a href="#/review">Review</a> page brings old questions back at growing intervals.</p>
-<p><strong>Your routine:</strong> do 1–2 new lessons, then clear your Review queue. Short daily sessions beat long weekend ones.</p>
+<p><strong>Your routine:</strong> do 1–2 new lessons, then clear your Review queue. From A+ onward, add 10 minutes of <a href="#/drills">Drills</a>, and take a <a href="#/exams">practice exam</a> when you finish each stage to find your weak domains. Short daily sessions beat long weekend ones.</p>
 <p>Feeling like "an idiot who knows nothing" is the normal starting point. Struggling to recall an answer is part of how learning works, not a sign you're failing.</p>`,
         exercise: {
           type: 'quiz',
