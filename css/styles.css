@@ -145,3 +145,21 @@ textarea.code {
 .callout { max-width: 760px; margin-top: 20px; background: var(--accent-soft); border-radius: 10px; padding: 16px 20px; }
 .callout h3 { margin-top: 0; }
 details { margin-top: 10px; color: var(--muted); }
+
+/* ---- path, review, badges ---- */
+.badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff; font-size: .75em; text-align: center; line-height: 18px; }
+.badge[hidden] { display: none; }
+.today { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.sect { font-size: 1.15rem; margin: 32px 0 12px; }
+.pathlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.pstep a { display: flex; gap: 12px; align-items: center; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-decoration: none; color: var(--text); height: 100%; }
+.pstep a:hover { border-color: var(--accent); }
+.pstep small { color: var(--muted); }
+.pstep.active a { border-color: var(--accent); }
+.pstep.complete .num { background: var(--accent); color: #fff; }
+.when { font-size: .85em !important; color: var(--accent) !important; font-weight: 600; }
+.answer-row { display: flex; gap: 8px; }
+.answer { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit; font-family: var(--mono); }
+.reviewcard { max-width: 640px; position: static; }
+.from { color: var(--muted); display: block; margin-bottom: 8px; }
+.domains { font-size: .88em; color: var(--muted); }

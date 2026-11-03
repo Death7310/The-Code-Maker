@@ -1,6 +1,12 @@
 # The Code Maker
 
-A browser-based course in the scripting languages named in the CompTIA PenTest+ objectives (**Bash, Python, PowerShell**), plus the professional groundwork (authorization, scope, methodology, reporting) and a career roadmap.
+A browser-based, zero-to-specialist path for a security career. It assumes no prior knowledge and climbs through:
+
+**Ground Zero → A+ Core 1 (220-1201) → A+ Core 2 (220-1202) → Network+ (N10-009) → Security+ (SY0-701) → PenTest+ professional practice**
+
+Coding tracks in **Bash, PowerShell and Python** (the three languages named in the PenTest+ objectives) run alongside the path. A **Review** queue uses spaced retrieval practice, bringing questions back at 1, 3, 7, 14 and 30 days.
+
+These lessons cover the skeleton of each exam, not all of it. Pair each stage with a complete study source and CompTIA's official objectives.
 
 Everything runs in a simulated environment. Nothing touches real systems.
 
@@ -20,7 +26,9 @@ Progress is saved in your browser (localStorage).
 index.html            app shell
 css/styles.css        styling (light/dark)
 js/shell.js           sandboxed Bash-like interpreter (browser + Node)
-js/curriculum.js      all lessons and exercises, as data
+js/content/*.js       one file per track (lessons + exercises as data)
+js/curriculum.js      path order, coding tracks, certification roadmap
+js/review.js          spaced-review (Leitner) scheduling
 js/python-runner.js   lazy Pyodide loader
 js/app.js             router, views, progress
 tests/                node:test suites
@@ -32,11 +40,11 @@ tests/                node:test suites
 npm test
 ```
 
-They check the shell interpreter, confirm every Bash exercise can be solved, and validate the quiz data.
+They check the shell interpreter and the review scheduler, confirm every shell exercise can be solved, and validate all question data.
 
 ## Adding a lesson
 
-Add an object to the relevant track in `js/curriculum.js`. Each exercise is `shell` (match terminal output), `python` (match stdout) or `quiz`. If you add a `shell` exercise, add its reference solution to `tests/curriculum.test.js`.
+Add an object to the relevant file in `js/content/`. Each exercise is `shell` (match terminal output), `python` (match stdout), `quiz` (multiple choice) or `input` (short typed answer). Optional `review` items feed the spaced-review queue. If you add a `shell` exercise, add its reference solution to `tests/curriculum.test.js`.
 
 ## Ethics
 
