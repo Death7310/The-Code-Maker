@@ -28,6 +28,18 @@ for (const f of files) {
   hash.update(f).update(buf);
   fs.writeFileSync(dest, buf);
 }
+// Bundle the Python runtime (pyodide) so Python works fully offline.
+// It is cached on first use rather than precached, to keep first load light.
+const PYODIDE_FILES = ['pyodide.js', 'pyodide.asm.js', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json'];
+const pyodideDir = path.join(ROOT, 'node_modules', 'pyodide');
+if (fs.existsSync(pyodideDir)) {
+  const dest = path.join(OUT, 'vendor', 'pyodide');
+  fs.mkdirSync(dest, { recursive: true });
+  for (const f of PYODIDE_FILES) fs.copyFileSync(path.join(pyodideDir, f), path.join(dest, f));
+  hash.update(require(path.join(pyodideDir, 'package.json')).version);
+} else {
+  console.warn('pyodide not installed (npm ci); Python lessons will not run in this build');
+}
 const version = hash.digest('hex').slice(0, 12);
 const assets = ['./'].concat(files);
 const sw = fs.readFileSync(path.join(ROOT, 'sw.template.js'), 'utf8')

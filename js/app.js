@@ -9,6 +9,7 @@
   const MS = CM.missions;
   const DR = CM.drills;
   const PR = CM.practice;
+  const PJ = CM.projects;
   const PMAP = CM.practiceMap || {};
   const EX = CM.exams;
   const R = CM.review;
@@ -26,6 +27,10 @@
   const mresults = load('codemaker.missions.v1');
   const unlocks = load('codemaker.unlock.v1');
   const drillStats = load('codemaker.drills.v1');
+  const pjState = load('codemaker.projects.v1');
+  function savePj() { save('codemaker.projects.v1', pjState); }
+  function pjCode(id, fallback) { try { const c = localStorage.getItem('codemaker.code.' + id); return c === null ? fallback : c; } catch (e) { return fallback; } }
+  function savePjCode(id, code) { try { localStorage.setItem('codemaker.code.' + id, code); } catch (e) { /* storage blocked */ } }
   const examStats = load('codemaker.exams.v1');
   function markDone(id) { done[id] = true; save('codemaker.progress.v1', done); updateBadge(); }
 
@@ -148,29 +153,34 @@
         <span><strong>${esc(t.title)}</strong><br><small>${esc(t.lang)} · ${n}/${t.lessons.length}</small></span></a></li>`;
     }).join('');
     const codeCards = coding.map((c) => trackCard(findTrack(c.id), c.start)).join('');
+    const nextPj = PJ.projects.find((p) => !pjProgress(p).complete);
+    const builtN = PJ.projects.filter((p) => pjProgress(p).complete).length;
     app.innerHTML = `
       <section class="hero">
-        <h1>From zero to job-ready in security</h1>
-        <p>Start with how computers work. Build up through CompTIA A+, Network+ and Security+, then specialize in penetration testing. Learn to code alongside. Every lesson ends with a question you have to answer, because that's how learning sticks.</p>
+        <h1>Learn security by building it</h1>
+        <p>You learn here by doing the work: writing real Python tools that are tested against data you've never seen, investigating incidents in a simulated company network, and working a Linux terminal. Everything runs inside the app, offline. Concepts and certification prep are here when a project needs them.</p>
         <div class="today">
-          ${nl ? `<a class="btn" href="#/lesson/${nl.t.id}/${nl.l.id}">Continue: ${esc(nl.l.title)} →</a>` : '<span>Path complete. Keep reviewing.</span>'}
+          ${nextPj ? `<a class="btn" href="#/project/${nextPj.id}">${builtN ? 'Continue building' : 'Start your first project'}: ${esc(nextPj.title)} →</a>` : '<span>All projects built. Try the missions or rebuild one from scratch.</span>'}
           <a class="btn ghost" href="#/review">Review (${nDue} due)</a>
         </div>
       </section>
-      <h2 class="sect">Your certification path</h2>
-      <ol class="pathlist">${steps}</ol>
-      <h2 class="sect">Practice tools</h2>
-      <section class="grid">
-        <a class="card" href="#/mixed"><span class="tag">Mixed practice</span><h3>Interleaved problems</h3><p>New problems from every lesson you've mastered, shuffled together. You have to recognize which principle applies before you can apply it.</p></a>
-        <a class="card" href="#/drills/subnet"><span class="tag">Drills</span><h3>Subnetting, binary & ports</h3><p>Endless generated problems with worked solutions. Ten minutes a day makes subnetting automatic.</p></a>
-        <a class="card" href="#/exams"><span class="tag">Practice exams</span><h3>A+, Network+, Security+</h3><p>Exam-style sets with shuffled options and results by official domain, so you know what to study next.</p></a>
-      </section>
-      <h2 class="sect">Missions: scenarios that unlock as you progress</h2>
+      <h2 class="sect">1 · Build: coding projects <small class="muted">(${builtN}/${PJ.projects.length} built)</small></h2>
+      <section class="grid">${projectCards(PJ.projects)}</section>
+      <h2 class="sect">2 · Investigate: missions in the simulated network</h2>
       <section class="grid">${missionCards()}</section>
-      <h2 class="sect">Coding skills, learned alongside the path</h2>
+      <h2 class="sect">3 · Operate: terminal and languages</h2>
       <section class="grid">${codeCards}
-        <a class="card" href="#/sandbox"><span class="tag">Free play</span><h3>Sandbox terminal</h3><p>An open simulated Linux shell with sample logs and files to explore.</p></a>
-      </section>`;
+        <a class="card" href="#/sandbox"><span class="tag">Free play</span><h3>Sandbox terminal</h3><p>A simulated Linux server: users, permissions, sudo, processes, services, networking and scripts.</p></a>
+      </section>
+      <h2 class="sect">4 · Sharpen: practice tools</h2>
+      <section class="grid">
+        <a class="card" href="#/mixed"><span class="tag">Mixed practice</span><h3>Interleaved problems</h3><p>New problems from every lesson you've mastered, shuffled together.</p></a>
+        <a class="card" href="#/drills/subnet"><span class="tag">Drills</span><h3>Subnetting, binary & ports</h3><p>Endless generated problems with worked solutions.</p></a>
+        <a class="card" href="#/exams"><span class="tag">Practice exams</span><h3>A+, Network+, Security+</h3><p>Exam-style sets with results by official domain.</p></a>
+      </section>
+      <h2 class="sect">5 · Know: concepts and certification prep</h2>
+      <p class="muted">The knowledge the certifications test, in order. Use it alongside the projects: when a project needs a concept, learn it here, then go back and build.${nl ? ` Next lesson: <a href="#/lesson/${nl.t.id}/${nl.l.id}">${esc(nl.l.title)}</a>.` : ''}</p>
+      <ol class="pathlist">${steps}</ol>`;
   }
 
   function viewTrack(id) {
@@ -904,6 +914,164 @@
     ask();
   }
 
+
+  // ---------- projects (learning by building) ----------
+  function pjProgress(p) {
+    const st = pjState[p.id] || {};
+    const n = p.milestones.filter((m) => (st.passed || {})[m.id]).length;
+    return { n, total: p.milestones.length, complete: n === p.milestones.length, assisted: !!st.assisted };
+  }
+  function projectCards(list) {
+    return list.map((p) => {
+      const pr = pjProgress(p);
+      const after = findTrack(p.after);
+      const pct = Math.round((pr.n / pr.total) * 100);
+      return `<a class="card project" href="#/project/${p.id}">
+        <span class="tag">${esc(p.level)}${pr.complete ? ' · ✓ built' : ''}${pr.assisted ? ' (assisted)' : ''}</span>
+        <h3>${esc(p.title)}</h3>
+        <p>${esc(p.concepts.join(' · '))}</p>
+        <div class="bar" role="progressbar" aria-label="${esc(p.title)} milestones" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>
+        <small>${pr.n}/${pr.total} milestones${after ? ` · pairs with ${esc(after.title)}` : ''}</small>
+      </a>`;
+    }).join('');
+  }
+  function viewProjects() {
+    app.innerHTML = `
+      <section class="trackhead">
+        <h1>Projects</h1>
+        <p>Real tools, written by you, in Python. Each project is a job at Harborview Logistics, built in milestones. Hidden tests run your code against <strong>new random data every time</strong>, so the only way to pass is a solution that genuinely works. Python runs inside the app, fully offline.</p>
+      </section>
+      <section class="grid">${projectCards(PJ.projects)}</section>`;
+  }
+
+  function viewProject(id) {
+    const p = PJ.projects.find((x) => x.id === id);
+    if (!p) return viewNotFound();
+    const st = pjState[p.id] = pjState[p.id] || { passed: {}, attempts: 0 };
+    const idx = PJ.projects.indexOf(p);
+    const nextP = PJ.projects[idx + 1];
+    app.innerHTML = `
+      <nav class="crumbs"><a href="#/projects">Projects</a> / ${esc(p.level)}</nav>
+      <div class="lesson projectlayout">
+        <section class="explain">
+          <h1>${esc(p.title)}</h1>
+          ${p.briefing}
+          <h2>Milestones</h2>
+          <ol class="milestones" id="mlist"></ol>
+          <p class="note">Concepts: ${esc(p.concepts.join(', '))}. Stuck on a concept? The matching lessons and the Sandbox are always available. Hints are per milestone; there's nothing wrong with using them, but try first.</p>
+        </section>
+        <section class="practice">
+          <div class="edhead"><strong>solution.py</strong><small id="saved">saved on this device</small></div>
+          <textarea class="code editor" id="ed" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Python code editor"></textarea>
+          <div class="row">
+            <button class="btn" id="btest">Run hidden tests ▶</button>
+            <button class="btn ghost" id="brun">Just run my code</button>
+            <button class="btn ghost small" id="breset">Reset to starter</button>
+          </div>
+          <div id="pjstatus" class="result" aria-live="polite"></div>
+          <pre class="pyout" id="pjout" aria-label="Output"></pre>
+          <details class="refsol"><summary>Stuck for good? Show a reference solution (marks the project as assisted)</summary><div id="refbox"></div></details>
+          <div class="nextrow" id="pjnext" hidden>${nextP ? `<a class="btn" href="#/project/${nextP.id}">Next project: ${esc(nextP.title)} →</a>` : '<a class="btn" href="#/projects">All projects</a>'}</div>
+        </section>
+      </div>`;
+    const ed = document.getElementById('ed');
+    ed.value = pjCode(p.id, p.starter);
+    let saveT = null;
+    ed.addEventListener('input', () => { clearTimeout(saveT); saveT = setTimeout(() => savePjCode(p.id, ed.value), 300); });
+    ed.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const a = ed.selectionStart;
+        ed.value = ed.value.slice(0, a) + '    ' + ed.value.slice(ed.selectionEnd);
+        ed.selectionStart = ed.selectionEnd = a + 4;
+        savePjCode(p.id, ed.value);
+      } else if (e.key === 'Enter') {
+        // keep the current line's indentation, and indent after a colon
+        const a = ed.selectionStart;
+        const lineStart = ed.value.lastIndexOf('\n', a - 1) + 1;
+        const line = ed.value.slice(lineStart, a);
+        let ind = (line.match(/^\s*/) || [''])[0];
+        if (/:\s*$/.test(line)) ind += '    ';
+        e.preventDefault();
+        ed.value = ed.value.slice(0, a) + '\n' + ind + ed.value.slice(ed.selectionEnd);
+        ed.selectionStart = ed.selectionEnd = a + 1 + ind.length;
+        savePjCode(p.id, ed.value);
+      }
+    });
+    let lastResults = null;
+    function drawMilestones() {
+      document.getElementById('mlist').innerHTML = p.milestones.map((m, i) => {
+        const ok = st.passed[m.id];
+        const r = lastResults && lastResults[m.id];
+        const fails = r && !r.passed && r.msgs && r.msgs.length ? `<pre class="failmsg">${esc(r.msgs.join('\n\n'))}</pre>` : '';
+        return `<li class="ms ${ok ? 'ok' : r ? 'bad' : ''}">
+          <div><span class="msmark">${ok ? '✓' : r ? '✗' : '○'}</span> <code>${esc(m.title)}</code></div>
+          <p>${esc(m.desc)}</p>${fails}
+          <details><summary>Hint</summary><p>${esc(p.hints[i])}</p></details>
+        </li>`;
+      }).join('');
+    }
+    drawMilestones();
+    const status = document.getElementById('pjstatus');
+    const out = document.getElementById('pjout');
+    const busy = (b) => ['btest', 'brun'].forEach((k) => { document.getElementById(k).disabled = b; });
+    async function go(withTests) {
+      savePjCode(p.id, ed.value);
+      busy(true);
+      status.className = 'result';
+      status.textContent = 'Running… (the first run starts Python, which takes a couple of seconds)';
+      out.textContent = '';
+      try {
+        const seed = Math.floor(Math.random() * 1e9);
+        const r = await CM.runPython(withTests ? PJ.program(p, ed.value, seed) : ed.value);
+        if (!withTests) {
+          out.textContent = r.stdout + (r.error ? '\n' + r.error : '');
+          status.className = r.error ? 'result bad' : 'result';
+          status.textContent = r.error ? 'Your code raised an error (see the last lines of the output).' : 'Ran without errors. Use "Run hidden tests" to check the milestones.';
+          return;
+        }
+        st.attempts = (st.attempts || 0) + 1;
+        const res = PJ.parseResults(p, r.stdout);
+        out.textContent = res.userOut.trim() + (r.error ? '\n' + r.error : '');
+        if (!res.ran) {
+          status.className = 'result bad';
+          status.textContent = 'The tests could not run. Usually that’s a syntax error, or code that crashes before your functions are defined. Read the error in the output.';
+          return;
+        }
+        lastResults = res.results;
+        p.milestones.forEach((m) => { if (res.results[m.id].passed) st.passed[m.id] = true; });
+        savePj();
+        drawMilestones();
+        const now = p.milestones.filter((m) => res.results[m.id].passed).length;
+        if (now === p.milestones.length) {
+          status.className = 'result ok';
+          status.textContent = `✓ All ${now} milestones pass on fresh random data. You built a working tool.${st.assisted ? ' (Assisted: try rebuilding it from scratch later.)' : ''}`;
+          document.getElementById('pjnext').hidden = false;
+        } else {
+          status.className = 'result bad';
+          status.textContent = `${now}/${p.milestones.length} milestones pass this run. Failing milestones show what was expected vs what your code returned, on the left.`;
+        }
+      } catch (e) {
+        status.className = 'result bad';
+        status.textContent = e.message;
+      } finally {
+        busy(false);
+      }
+    }
+    document.getElementById('btest').onclick = () => go(true);
+    document.getElementById('brun').onclick = () => go(false);
+    document.getElementById('breset').onclick = () => {
+      if (confirm('Replace your code with the original starter? Your current code will be lost.')) { ed.value = p.starter; savePjCode(p.id, ed.value); }
+    };
+    document.querySelector('.refsol').addEventListener('toggle', (e) => {
+      if (!e.target.open) return;
+      st.assisted = true;
+      savePj();
+      document.getElementById('refbox').innerHTML = `<pre class="question">${esc(p.reference)}</pre><p class="note">Read it, close it, then write your own version from memory. Typing it in without understanding it teaches very little.</p>`;
+    });
+    if (pjProgress(p).complete) document.getElementById('pjnext').hidden = false;
+  }
+
   function viewSandbox() {
     app.innerHTML = `
       <section class="trackhead">
@@ -925,7 +1093,7 @@
     window.scrollTo(0, 0);
     document.querySelectorAll('#nav a').forEach((a) => {
       const h = a.getAttribute('href').replace(/^#\/?/, '');
-      a.classList.toggle('active', h ? parts[0] === h || (h === 'missions' && parts[0] === 'mission') || (h === 'exams' && parts[0] === 'exam') : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
+      a.classList.toggle('active', h ? parts[0] === h || (h === 'missions' && parts[0] === 'mission') || (h === 'projects' && parts[0] === 'project') || (h === 'exams' && parts[0] === 'exam') : !parts.length || parts[0] === 'track' || parts[0] === 'lesson');
     });
     updateBadge();
     if (!parts.length) return viewHome();
@@ -935,6 +1103,8 @@
     if (parts[0] === 'missions') return viewMissions();
     if (parts[0] === 'drills') return viewDrills(parts[1]);
     if (parts[0] === 'mixed') return viewMixed();
+    if (parts[0] === 'projects') return viewProjects();
+    if (parts[0] === 'project') return viewProject(parts[1]);
     if (parts[0] === 'exams') return viewExams();
     if (parts[0] === 'exam') return viewExam(parts[1]);
     if (parts[0] === 'mission') return viewMission(parts[1]);

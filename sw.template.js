@@ -1,7 +1,7 @@
 /*
  * Service worker: makes the site work offline after the first visit.
- * App files are precached; the Python runtime (Pyodide, from a CDN) is cached
- * the first time a Python lesson runs, so it also works offline after that.
+ * App files are precached; the bundled Python runtime (vendor/pyodide/) is
+ * cached the first time Python runs, so after that everything works offline.
  * The cache version and asset list are filled in by scripts/build-web.js.
  */
 const CACHE = 'codemaker-__VERSION__';
@@ -23,8 +23,9 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  const isPyodide = url.hostname === 'cdn.jsdelivr.net' && url.pathname.startsWith('/pyodide/');
-  if (url.origin !== self.location.origin && !isPyodide) return;
+  if (url.origin !== self.location.origin) return;
+  // Large bundled files (the Python runtime) are cached the first time they're used.
+  const isPyodide = url.pathname.includes('/vendor/pyodide/');
   e.respondWith(
     caches.match(req, { ignoreSearch: url.origin === self.location.origin }).then((hit) => {
       if (hit) return hit;
