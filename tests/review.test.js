@@ -37,3 +37,10 @@ test('input answers are normalized', () => {
   assert.ok(R.checkInput({ accept: ['Layer 3'] }, '  layer   3 '));
   assert.ok(!R.checkInput({ accept: ['443'] }, '80'));
 });
+
+test('collect uses generators for mapped lessons', () => {
+  const map = { x1: { gens: ['g.a', 'g.b'], need: 3 } };
+  const items = R.collect(tracks, { x1: true, x3: true }, map);
+  assert.deepStrictEqual(items.map((i) => i.id), ['x1:g:g.a', 'x1:g:g.b', 'x1:r0', 'x3:ex']);
+  assert.strictEqual(items[0].type, 'gen');
+});

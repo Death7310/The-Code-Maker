@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
-    "@capacitor/core": "8.6.0"
+    "@capacitor/core": "8.6.0",
+    "pyodide": "0.27.7"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.0"
