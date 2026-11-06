@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - name: Install dependencies (includes the bundled Python runtime)
+        run: npm ci
       - name: Test
         run: npm test
       - name: Build site

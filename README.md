@@ -8,6 +8,8 @@ The order follows leverage: each stage reuses what the previous ones taught.
 
 Coding tracks in **Bash, PowerShell and Python** (the three languages named in the PenTest+ objectives) run alongside the path. A **Review** queue uses spaced retrieval practice, bringing questions back at 1, 3, 7, 14 and 30 days.
 
+**Projects (the core).** Nine multi-milestone Python projects, each a realistic job at a fictional company: asset summaries, an SSH log triage tool, a password-policy checker, a patch-priority report, a file integrity monitor, a subnet planner, a firewall rule auditor, an incident timeline builder and a findings-report generator. You write the code in the in-app editor; hidden tests run it against new random data on every run and grade each milestone separately. Python runs fully offline: the Pyodide runtime is bundled (`vendor/pyodide/`) and runs in a Web Worker with a time limit, so an infinite loop can't freeze the app.
+
 **Mastery practice.** About 35 lessons use problem generators instead of one fixed question. Every attempt is a new problem built on the same principle, with different numbers, names, logs or rule sets, and never the lesson's own example. A lesson completes after several consecutive correct, unaided answers; hints are available but don't count. A wrong answer shows the worked solution for that exact problem, then gives a different one. Lessons end with a written self-explanation compared against a model checklist. Review and **Mixed practice** (interleaved across mastered lessons) also generate fresh problems. Python exercises are graded by hidden tests, randomized on every run.
 
 **Missions** (12) are investigation scenarios inside a fictional company, starting right after Ground Zero. You work through evidence files in the terminal, answer questions, and make decisions that a simulated adversary reacts to. They unlock as you finish stages, and the support fades as you advance (Guided → Supported → Independent): a lost file and a data-handling request, phishing, disguised malware, a crypto-miner on a live Linux server, SSH brute force, a rogue DHCP server, a hosts-file hijack, ransomware, a public S3 bucket, a leaked Azure secret, and a penetration-test engagement with scope and ethics pressure. All names, domains (`.example`) and IPs (RFC 5737 documentation ranges) are fictional.
@@ -27,7 +29,7 @@ Everything runs in a simulated environment. Nothing touches real systems.
 **Locally.** Open `index.html` in a browser; no build step is needed. Or run `npm run build` and serve `www/`.
 
 - **Bash and Linux** lessons use a built-in simulated Linux system (`js/shell.js`): users, file permissions, `sudo`, processes, services, networking and runnable scripts.
-- **Python** lessons run real Python in the browser via [Pyodide](https://pyodide.org). The first run needs internet; after that it's cached.
+- **Python** runs in the app via a bundled copy of [Pyodide](https://pyodide.org), fully offline. It needs the app served over http(s) (the website, the Android app, or `npm run build` then serve `www/`), not opened as a local file.
 - **PowerShell** lessons are code-reading quizzes, which matches how the exam tests scripts.
 
 Progress is stored on the device (localStorage).
@@ -53,6 +55,8 @@ js/review.js          spaced-review (Leitner) scheduling
 js/missions.js        scenario missions: evidence files, steps, scoring
 js/drills.js          generated subnetting / binary / port problems
 js/practice/          mastery engine, 40 problem generators, lesson → generator map
+js/projects/          coding projects: briefings, milestones, starters, randomized hidden tests
+js/py-worker.js       runs Python off the main thread (bundled Pyodide)
 manifest.webmanifest  PWA manifest; sw.template.js → www/sw.js (offline cache)
 scripts/build-web.js  builds www/ for GitHub Pages and the Android app
 scripts/make-icons.py regenerates web + Android icons

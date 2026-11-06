@@ -218,3 +218,20 @@ details { margin-top: 10px; color: var(--muted); }
 .checklist li { margin: 6px 0; }
 .checklist label { display: flex; gap: 8px; align-items: flex-start; }
 .practice .terminal { height: 260px; margin-top: 8px; }
+
+/* ---- projects ---- */
+.muted { color: var(--muted); font-weight: 400; }
+.projectlayout .practice { position: static; }
+.edhead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.edhead small { color: var(--muted); }
+textarea.editor { min-height: 360px; line-height: 1.45; white-space: pre; overflow-x: auto; }
+.milestones { list-style: none; padding: 0; display: grid; gap: 10px; }
+.ms { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.ms.ok { border-color: var(--accent); background: var(--accent-soft); }
+.ms.bad { border-color: var(--bad); }
+.ms p { margin: 6px 0; font-size: .93em; }
+.msmark { display: inline-block; width: 1.2em; font-weight: 700; }
+.ms.ok .msmark { color: var(--accent); }
+.ms.bad .msmark { color: var(--bad); }
+.failmsg { background: var(--bad-soft); color: var(--bad); border-radius: 6px; padding: 8px 10px; font-size: .85em; overflow-x: auto; white-space: pre-wrap; }
+.refsol { margin-top: 14px; }
