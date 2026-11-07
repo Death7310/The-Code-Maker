@@ -214,7 +214,7 @@
     const t = findTrack(tid);
     const idx = t ? t.lessons.findIndex((l) => l.id === lid) : -1;
     if (idx < 0) return viewNotFound();
-    if (PMAP[lid]) return viewMasteryLesson(t, idx);
+    if (PMAP[lid]) { viewMasteryLesson(t, idx); enhanceWithStudy(lid); return; }
     const l = t.lessons[idx];
     const next = t.lessons[idx + 1];
     const ex = l.exercise;
@@ -232,6 +232,7 @@
           <div class="nextrow">${next ? `<a class="btn ghost" href="#/lesson/${t.id}/${next.id}">Next: ${esc(next.title)} →</a>` : afterTrack(t)}</div>
         </section>
       </div>`;
+    enhanceWithStudy(l.id);
     const exEl = document.getElementById('ex');
     const result = document.getElementById('result');
     const pass = (msg) => {
@@ -1070,6 +1071,61 @@
       document.getElementById('refbox').innerHTML = `<pre class="question">${esc(p.reference)}</pre><p class="note">Read it, close it, then write your own version from memory. Typing it in without understanding it teaches very little.</p>`;
     });
     if (pjProgress(p).complete) document.getElementById('pjnext').hidden = false;
+  }
+
+
+  // ---------- study notes (in-depth, per lesson) ----------
+  const STUDY = CM.study || {};
+  function studyHtml(lid) {
+    const n = STUDY[lid];
+    const list = (arr) => `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    return `
+      ${n.sections.map((sec) => `<section class="studysec"><h2>${esc(sec.h)}</h2>${sec.html}</section>`).join('')}
+      ${n.misconceptions && n.misconceptions.length ? `<section class="studysec"><h2>Common misconceptions</h2>${list(n.misconceptions)}</section>` : ''}
+      ${n.examTraps && n.examTraps.length ? `<section class="studysec"><h2>Exam traps</h2>${list(n.examTraps)}</section>` : ''}
+      ${n.onTheJob ? `<section class="studysec"><h2>On the job</h2><p>${esc(n.onTheJob)}</p></section>` : ''}
+      ${n.checks && n.checks.length ? `<section class="studysec"><h2>Reasoning checks</h2><p class="note">New situations, not the examples above. Pick an answer and read why EVERY option is right or wrong.</p>
+        ${n.checks.map((c, ci) => `<div class="rcheck" data-ci="${ci}"><pre class="question">${esc(c.q)}</pre><div class="opts">${c.options.map((o, oi) => `<button class="opt" data-oi="${oi}">${esc(o)}</button>`).join('')}</div><div class="whys"></div></div>`).join('')}</section>` : ''}
+      ${n.sources && n.sources.length ? `<section class="studysec"><h2>Sources and further reading</h2><ul>${n.sources.map((x) => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></li>`).join('')}</ul></section>` : ''}`;
+  }
+  // Adds Overview / Study tabs to a lesson's explanation panel when notes exist.
+  function enhanceWithStudy(lid) {
+    const n = STUDY[lid];
+    const art = document.querySelector('article.explain');
+    if (!n || !art) return;
+    const h1 = art.querySelector('h1');
+    const overview = document.createElement('div');
+    while (h1.nextSibling) overview.appendChild(h1.nextSibling);
+    const study = document.createElement('div');
+    study.className = 'studybody';
+    study.hidden = true;
+    study.innerHTML = studyHtml(lid);
+    const tabs = document.createElement('nav');
+    tabs.className = 'tabs lessontabs';
+    tabs.innerHTML = '<button class="tab on" data-t="o">Overview</button><button class="tab" data-t="s">Study notes (in depth)</button>';
+    art.append(tabs, overview, study);
+    tabs.querySelectorAll('.tab').forEach((b) => {
+      b.onclick = () => {
+        tabs.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === b));
+        overview.hidden = b.dataset.t !== 'o';
+        study.hidden = b.dataset.t !== 's';
+      };
+    });
+    study.querySelectorAll('.rcheck').forEach((box) => {
+      const c = n.checks[Number(box.dataset.ci)];
+      box.querySelectorAll('.opt').forEach((b) => {
+        b.onclick = () => {
+          const oi = Number(b.dataset.oi);
+          box.querySelectorAll('.opt').forEach((x, k) => {
+            x.disabled = true;
+            if (k === c.answer) x.classList.add('chosen-ok');
+            else if (k === oi) x.classList.add('chosen-bad');
+          });
+          box.querySelector('.whys').innerHTML = `<div class="result ${oi === c.answer ? 'ok' : 'bad'}">${oi === c.answer ? '✓ Correct.' : '✗ Not quite. The correct answer is highlighted.'}</div>
+            <ul class="whylist">${c.options.map((o, k) => `<li class="${k === c.answer ? 'right' : ''}"><strong>${esc(o)}</strong>: ${esc(c.why[k])}</li>`).join('')}</ul>`;
+        };
+      });
+    });
   }
 
   function viewSandbox() {

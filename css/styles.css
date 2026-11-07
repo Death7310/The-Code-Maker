@@ -235,3 +235,14 @@ textarea.editor { min-height: 360px; line-height: 1.45; white-space: pre; overfl
 .ms.bad .msmark { color: var(--bad); }
 .failmsg { background: var(--bad-soft); color: var(--bad); border-radius: 6px; padding: 8px 10px; font-size: .85em; overflow-x: auto; white-space: pre-wrap; }
 .refsol { margin-top: 14px; }
+
+/* ---- study notes ---- */
+.lessontabs { margin: 0 0 14px; }
+.lessontabs .tab { font: inherit; cursor: pointer; }
+.studysec h2 { font-size: 1.1rem; margin: 20px 0 6px; }
+.studysec:first-child h2 { margin-top: 0; }
+.studybody pre { background: var(--bg); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+.rcheck { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 12px; }
+.whylist { padding-left: 18px; font-size: .93em; }
+.whylist li { margin: 6px 0; }
+.whylist li.right { color: var(--accent); }
