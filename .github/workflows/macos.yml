@@ -37,10 +37,21 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Build DMGs (arm64 + x64)
+      # One architecture at a time: building DMGs in parallel makes hdiutil
+      # fail to detach images on GitHub's macOS runners. Retries cover the
+      # remaining occasional "resource busy" flakes.
+      - name: Build DMGs (arm64, then x64)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npx electron-builder --mac --publish never
+        run: |
+          for arch in arm64 x64; do
+            for attempt in 1 2 3; do
+              if npx electron-builder --mac dmg --$arch --publish never; then break; fi
+              if [ "$attempt" = 3 ]; then echo "DMG build failed for $arch"; exit 1; fi
+              echo "Retrying $arch build (attempt $((attempt + 1)))"; sleep 10
+            done
+          done
+          ls -la dist-desktop/*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
