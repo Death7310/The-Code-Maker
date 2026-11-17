@@ -1,0 +1,65 @@
+# Builds the macOS app (DMGs for Apple Silicon and Intel) on every push and
+# publishes them to the rolling "mac-latest" GitHub release.
+# The app is ad-hoc signed (no paid Apple Developer certificate), so macOS
+# asks for confirmation on first launch: right-click the app → Open, or
+# System Settings → Privacy & Security → Open Anyway.
+name: macOS app
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Build DMGs (arm64 + x64)
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheCodeMaker-macOS
+          path: dist-desktop/*.dmg
+          if-no-files-found: error
+
+      - name: Publish to the mac-latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-latest
+          name: The Code Maker for macOS (latest build)
+          prerelease: true
+          make_latest: false
+          body: |
+            macOS desktop app. Download the DMG for your Mac:
+            - TheCodeMaker-mac-arm64.dmg: Apple Silicon (M1, M2, M3, M4…)
+            - TheCodeMaker-mac-x64.dmg: Intel Macs
+            First launch: open the DMG, drag the app to Applications, then right-click it → Open
+            (or System Settings → Privacy & Security → Open Anyway). It's ad-hoc signed, not notarized.
+            Built from ${{ github.ref_name }} @ ${{ github.sha }}.
+          files: dist-desktop/*.dmg

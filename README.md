@@ -26,6 +26,8 @@ Everything runs in a simulated environment. Nothing touches real systems.
 
 **Android APK.** The easiest way: the repository's **Releases** page. Every push to `main` publishes a release with `TheCodeMaker-debug.apk` attached. Every other push still builds one: open the run in the **Actions** tab and download `TheCodeMaker-apk` under **Artifacts**. On the phone, allow installs from that source and open the APK. Pushing a tag such as `v1.0.0` also attaches the APK to a GitHub Release. These are debug builds for sideloading; publishing to Google Play needs a release signing key.
 
+**macOS.** Every push builds DMGs (the *macOS app* workflow) and publishes them to the [mac-latest release](../../releases/tag/mac-latest): `TheCodeMaker-mac-arm64.dmg` for Apple Silicon, `TheCodeMaker-mac-x64.dmg` for Intel. Open the DMG, drag the app to Applications, then right-click → **Open** the first time (it's ad-hoc signed, not notarized by Apple). Run it locally with `npm run desktop`.
+
 **Locally.** Open `index.html` in a browser; no build step is needed. Or run `npm run build` and serve `www/`.
 
 - **Bash and Linux** lessons use a built-in simulated Linux system (`js/shell.js`): users, file permissions, `sudo`, processes, services, networking and runnable scripts.
@@ -61,6 +63,7 @@ manifest.webmanifest  PWA manifest; sw.template.js → www/sw.js (offline cache)
 scripts/build-web.js  builds www/ for GitHub Pages and the Android app
 scripts/make-icons.py regenerates web + Android icons
 android/              Capacitor Android project (wraps www/)
+desktop/main.js       Electron shell for macOS/desktop (serves www/ via app://)
 .github/workflows/    APK build + GitHub Pages deploy
 js/exams.js           practice exams: domain-weighted question selection and grading
 js/python-runner.js   lazy Pyodide loader
