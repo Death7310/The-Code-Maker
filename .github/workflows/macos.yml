@@ -67,10 +67,15 @@ jobs:
           prerelease: true
           make_latest: false
           body: |
-            macOS desktop app. Download the DMG for your Mac:
+            Easiest install (no "damaged" warning): open Terminal and run
+                curl -fsSL https://raw.githubusercontent.com/Death7310/The-Code-Maker/main/scripts/install-mac.sh | bash
+            It picks the right version for your Mac, installs it to Applications and opens it.
+
+            Or download the DMG for your Mac:
             - TheCodeMaker-mac-arm64.dmg: Apple Silicon (M1, M2, M3, M4…)
             - TheCodeMaker-mac-x64.dmg: Intel Macs
-            First launch: open the DMG, drag the app to Applications, then right-click it → Open
-            (or System Settings → Privacy & Security → Open Anyway). It's ad-hoc signed, not notarized.
+            If macOS says the app is "damaged" after a browser download, run this once in Terminal:
+                xattr -cr "/Applications/The Code Maker.app"
+            (Browsers tag downloads; the app is ad-hoc signed, not notarized by Apple.)
             Built from ${{ github.ref_name }} @ ${{ github.sha }}.
           files: dist-desktop/*.dmg
