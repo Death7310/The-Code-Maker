@@ -26,6 +26,16 @@ Everything runs in a simulated environment. Nothing touches real systems.
 
 **Android APK.** The easiest way: the repository's **Releases** page. Every push to `main` publishes a release with `TheCodeMaker-debug.apk` attached. Every other push still builds one: open the run in the **Actions** tab and download `TheCodeMaker-apk` under **Artifacts**. On the phone, allow installs from that source and open the APK. Pushing a tag such as `v1.0.0` also attaches the APK to a GitHub Release. These are debug builds for sideloading; publishing to Google Play needs a release signing key.
 
+**macOS.** Easiest install, with no "damaged" warning, from Terminal:
+
+```
+curl -fsSL https://raw.githubusercontent.com/Death7310/The-Code-Maker/main/scripts/install-mac.sh | bash
+```
+
+It downloads the right DMG for your Mac (Apple Silicon or Intel) from the [mac-latest release](../../releases/tag/mac-latest), installs the app to Applications and opens it. Files downloaded with `curl` aren't tagged as quarantined the way browser downloads are, so macOS doesn't block the unsigned app. Read [the script](scripts/install-mac.sh) before running it.
+
+If you downloaded the DMG with a browser and macOS says the app is "damaged", run this once: `xattr -cr "/Applications/The Code Maker.app"`. The app is ad-hoc signed but not notarized, which would need a paid Apple Developer account. Run it locally from source with `npm run desktop`.
+
 **Locally.** Open `index.html` in a browser; no build step is needed. Or run `npm run build` and serve `www/`.
 
 - **Bash and Linux** lessons use a built-in simulated Linux system (`js/shell.js`): users, file permissions, `sudo`, processes, services, networking and runnable scripts.
@@ -61,6 +71,7 @@ manifest.webmanifest  PWA manifest; sw.template.js → www/sw.js (offline cache)
 scripts/build-web.js  builds www/ for GitHub Pages and the Android app
 scripts/make-icons.py regenerates web + Android icons
 android/              Capacitor Android project (wraps www/)
+desktop/main.js       Electron shell for macOS/desktop (serves www/ via app://)
 .github/workflows/    APK build + GitHub Pages deploy
 js/exams.js           practice exams: domain-weighted question selection and grading
 js/python-runner.js   lazy Pyodide loader

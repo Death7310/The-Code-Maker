@@ -36,6 +36,8 @@ save(draw(192), 'icons/icon-192.png')
 save(draw(512, safe=0.7, rounded=False), 'icons/maskable-512.png')
 save(draw(180, rounded=False), 'icons/apple-touch-icon.png')
 save(draw(64), 'icons/favicon.png')
+# Desktop (Electron / macOS) app icon
+save(draw(1024), 'build-resources/icon.png')
 
 # Android launcher icons (written only if the Capacitor Android project exists)
 res = os.path.join(ROOT, 'android/app/src/main/res')
